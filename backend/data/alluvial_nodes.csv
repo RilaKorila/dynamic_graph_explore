@@ -1,0 +1,10 @@
+time,community_id,size,label
+2021Q1,C1,128,"Comm 1"
+2021Q1,C2,95,"Comm 2"
+2021Q1,C3,156,"Comm 3"
+2021Q2,C1,142,"Comm 1"
+2021Q2,C2,108,"Comm 2"
+2021Q2,C3,169,"Comm 3"
+2021Q3,C1,158,"Comm 1"
+2021Q3,C2,125,"Comm 2"
+2021Q3,C3,182,"Comm 3"

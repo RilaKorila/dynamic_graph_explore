@@ -1,0 +1,6 @@
+.next/*
+node_modules
+
+venv/*
+
+backend/app/__pycache__/*

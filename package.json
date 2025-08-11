@@ -1,0 +1,39 @@
+{
+  "name": "dynamic_graph_explore",
+  "version": "1.0.0",
+  "description": "Alluvial と Graph Layout が連動する可視化プログラム",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RilaKorila/dynamic_graph_explore.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RilaKorila/dynamic_graph_explore/issues"
+  },
+  "homepage": "https://github.com/RilaKorila/dynamic_graph_explore#readme",
+  "dependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "autoprefixer": "^10.4.21",
+    "d3": "^7.0.0",
+    "d3-sankey": "^0.12.0",
+    "graphology": "^0.25.0",
+    "next": "^14.0.0",
+    "postcss": "^8.5.6",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "sigma": "^2.0.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.0.0",
+    "zustand": "^4.0.0"
+  }
+}
