@@ -1,7 +1,7 @@
 'use client'
 
 import TimeSlider from '@/components/TimeSlider'
-import LegendAndSearch from '@/components/LegendAndSearch'
+import Legend from '@/components/Legend'
 import AlluvialChart from '@/components/AlluvialChart'
 import GraphChart from '@/components/GraphChart'
 
@@ -35,7 +35,7 @@ export default function Home() {
 
                 {/* 凡例・検索（下側） */}
                 <div>
-                    <LegendAndSearch />
+                    <Legend />
                 </div>
             </div>
         </main>
