@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import TimeSlider from '@/components/TimeSlider'
+import LegendAndSearch from '@/components/LegendAndSearch'
 
 export default function Home() {
     return (
@@ -13,7 +14,12 @@ export default function Home() {
                     Alluvial と Graph Layout が連動する可視化プログラム
                 </p>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* 時刻スライダー（上側） */}
+                <div className="mb-8">
+                    <TimeSlider />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     {/* Alluvial ビュー（左側） */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <h2 className="text-xl font-semibold mb-4">Alluvial View</h2>
@@ -31,20 +37,9 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* 時刻スライダー（上側） */}
-                <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold mb-4">Time Slider</h2>
-                    <div className="h-16 bg-gray-100 rounded flex items-center justify-center">
-                        <p className="text-gray-500">Time Slider - Coming Soon</p>
-                    </div>
-                </div>
-
                 {/* 凡例・検索（下側） */}
-                <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold mb-4">Legend & Search</h2>
-                    <div className="h-24 bg-gray-100 rounded flex items-center justify-center">
-                        <p className="text-gray-500">Legend & Search - Coming Soon</p>
-                    </div>
+                <div>
+                    <LegendAndSearch />
                 </div>
             </div>
         </main>
