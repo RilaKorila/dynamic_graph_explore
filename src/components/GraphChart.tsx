@@ -6,6 +6,7 @@ import Sigma from 'sigma'
 import { useVizStore } from '@/store/vizStore'
 import { fetchNodes, fetchEdges } from '@/lib/api'
 import { Node, Edge } from '@/types'
+import { getCommunityColor } from '@/lib/colors'
 
 interface GraphData {
     nodes: Node[]
@@ -43,34 +44,9 @@ export default function GraphChart() {
         loadData()
     }, [])
 
-    // コミュニティ → 色のマッピング
+    // コミュニティIDから色を取得する
     const colorByCommunity = useMemo(() => {
-        const palette = [
-            '#3B82F6', // blue
-            '#10B981', // green
-            '#F59E0B', // yellow
-            '#EF4444', // red
-            '#8B5CF6', // purple
-            '#06B6D4', // cyan
-            '#F97316', // orange
-            '#84CC16', // lime
-        ]
-
-        return (communityId: string) => {
-            // C<number> 形式のコミュニティIDから色を取得
-            const match = communityId.match(/C(\d+)/)
-            if (match) {
-                const index = parseInt(match[1]) - 1
-                return palette[index % palette.length]
-            }
-            // フォールバック: ハッシュベースの色
-            let hash = 0
-            for (let i = 0; i < communityId.length; i++) {
-                hash = ((hash << 5) - hash) + communityId.charCodeAt(i)
-                hash |= 0
-            }
-            return palette[Math.abs(hash) % palette.length]
-        }
+        return getCommunityColor
     }, [])
 
     // グラフの初期化と描画

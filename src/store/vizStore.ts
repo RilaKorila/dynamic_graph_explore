@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { getCommunityColor } from '@/lib/colors'
 
 export interface VizState {
     // 時間範囲（例: ["2021Q1","2021Q3"]）
@@ -9,6 +10,8 @@ export interface VizState {
     highlightedNodeIds: Set<string>
     // 現在の時刻（スライダーの単一点）
     currentTime: string
+    // コミュニティの色マッピング
+    communityColors: Map<string, string>
 }
 
 interface VizActions {
@@ -26,6 +29,8 @@ interface VizActions {
     toggleHighlightedNode: (id: string) => void
     // ハイライトをクリア
     clearHighlightedNodes: () => void
+    // コミュニティの色マッピングを初期化
+    initializeCommunityColors: (communityIds: string[]) => void
 }
 
 export const useVizStore = create<VizState & VizActions>((set, get) => ({
@@ -34,6 +39,7 @@ export const useVizStore = create<VizState & VizActions>((set, get) => ({
     selectedCommunities: new Set(),
     highlightedNodeIds: new Set(),
     currentTime: '2021Q3',
+    communityColors: new Map(),
 
     // アクション
     setBrush: (range: [string, string]) => {
@@ -80,5 +86,17 @@ export const useVizStore = create<VizState & VizActions>((set, get) => ({
 
     clearHighlightedNodes: () => {
         set({ highlightedNodeIds: new Set() })
+    },
+
+    initializeCommunityColors: (communityIds: string[]) => {
+        const colorMap = new Map<string, string>()
+        communityIds.forEach(id => {
+            colorMap.set(id, getCommunityColor(id))
+        })
+        console.log('Zustand: initializeCommunityColors', {
+            communityIds,
+            colorMap: Object.fromEntries(colorMap)
+        })
+        set({ communityColors: colorMap })
     },
 }))

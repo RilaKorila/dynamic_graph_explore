@@ -5,6 +5,7 @@ import * as d3 from 'd3'
 import { useVizStore } from '@/store/vizStore'
 import { fetchAlluvialNodes, fetchAlluvialLinks } from '@/lib/api'
 import { AlluvialNode, AlluvialLink, AlluvialBlock } from '@/types'
+import { getCommunityColor, getUniqueCommunityIds } from '@/lib/colors'
 
 
 interface AlluvialData {
@@ -27,7 +28,9 @@ export default function AlluvialChart() {
         setBrush,
         currentTime,
         setCurrentTime,
-        highlightedNodeIds
+        highlightedNodeIds,
+        communityColors,
+        initializeCommunityColors
     } = useVizStore()
 
     // データの取得
@@ -40,6 +43,10 @@ export default function AlluvialChart() {
                     fetchAlluvialLinks()
                 ])
                 setData({ nodes, links })
+
+                // コミュニティの色マッピングを初期化
+                const uniqueCommunityIds = getUniqueCommunityIds(nodes)
+                initializeCommunityColors(uniqueCommunityIds)
             } catch (err) {
                 setError('データの読み込みに失敗しました')
                 console.error('Error loading alluvial data:', err)
@@ -49,28 +56,14 @@ export default function AlluvialChart() {
         }
 
         loadData()
-    }, [])
+    }, [initializeCommunityColors])
 
-    // コミュニティ → 色
+    // コミュニティIDから色を取得
     const colorByCommunity = useMemo(() => {
-        const palette = d3.schemeTableau10
-        return (cid: string) => {
-            // C<number> 想定だが、任意の文字列もOK
-            const m = cid.match(/\d+/)?.[0]
-
-            // d3.hashCode は存在しないので自前でハッシュ関数を定義
-            function simpleHash(str: string): number {
-                let hash = 0
-                for (let i = 0; i < str.length; i++) {
-                    hash = ((hash << 5) - hash) + str.charCodeAt(i)
-                    hash |= 0 // 32ビット整数に変換
-                }
-                return hash
-            }
-            const idx = m ? (+m % palette.length) : Math.abs(simpleHash(cid)) % palette.length
-            return palette[idx]
+        return (communityId: string) => {
+            return communityColors.get(communityId) || getCommunityColor(communityId)
         }
-    }, [])
+    }, [communityColors])
 
     // ハイライトされたノードのコミュニティを取得
     const highlightedCommunities = useMemo(() => {
