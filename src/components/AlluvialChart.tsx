@@ -19,7 +19,16 @@ export default function AlluvialChart() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const { selectedCommunities, toggleCommunity, setSelectedCommunities } = useVizStore()
+    const {
+        selectedCommunities,
+        toggleCommunity,
+        setSelectedCommunities,
+        timeRange,
+        setBrush,
+        currentTime,
+        setCurrentTime,
+        highlightedNodeIds
+    } = useVizStore()
 
     // データの取得
     useEffect(() => {
@@ -62,6 +71,16 @@ export default function AlluvialChart() {
             return palette[idx]
         }
     }, [])
+
+    // ハイライトされたノードのコミュニティを取得
+    const highlightedCommunities = useMemo(() => {
+        if (!data || highlightedNodeIds.size === 0) return new Set<string>()
+
+        // AlluvialNodeにはnode_idがないため、GraphChartから取得したノードデータを使用
+        // この実装では、GraphChartのノード選択状態を直接反映できないため、
+        // 一時的に空のセットを返す（後でGraphChartとの連携を実装）
+        return new Set<string>()
+    }, [data, highlightedNodeIds])
 
     // D3 Alluvial図の描画
     useEffect(() => {
@@ -130,8 +149,43 @@ export default function AlluvialChart() {
                 .attr('class', `slice-${time}`)
                 .attr('transform', `translate(${(timeScale(time) ?? 0) + margin.left},0)`)
 
+            // 時間軸の背景（クリック可能）
+            sliceG.append('rect')
+                .attr('class', 'time-background')
+                .attr('x', 0)
+                .attr('y', margin.top + chartHeight)
+                .attr('width', bandwidth)
+                .attr('height', 20)
+                .attr('fill', timeRange.includes(time) ? '#E5E7EB' : 'transparent')
+                .attr('stroke', timeRange.includes(time) ? '#6B7280' : 'none')
+                .attr('stroke-width', timeRange.includes(time) ? 2 : 0)
+                .style('cursor', 'pointer')
+                .on('click', (event) => {
+                    // 時間範囲の選択（Shift+クリックで範囲拡張）
+                    if (event.shiftKey) {
+                        // Shift+クリック：時間範囲を拡張
+                        const currentRange = useVizStore.getState().timeRange
+                        let newTimeRange: [string, string]
+
+                        if (time < currentRange[0]) {
+                            newTimeRange = [time, currentRange[1]]
+                        } else if (time > currentRange[1]) {
+                            newTimeRange = [currentRange[0], time]
+                        } else {
+                            // 範囲内の場合は単一時間に設定
+                            newTimeRange = [time, time]
+                        }
+                        setBrush(newTimeRange)
+                    } else {
+                        // 通常クリック：単一時間に設定
+                        const newTimeRange: [string, string] = [time, time]
+                        setBrush(newTimeRange)
+                    }
+                    setCurrentTime(time)
+                })
+
             // ブロック
-            sliceG.selectAll('rect.comm-rect')
+            const blockSelection = sliceG.selectAll('rect.comm-rect')
                 .data(blocks, (d: any) => d.community_id) // (time, community_id) がユニーク前提
                 .join('rect')
                 .attr('class', 'comm-rect')
@@ -142,9 +196,22 @@ export default function AlluvialChart() {
                 .attr('y', (d: AlluvialBlock) => d.y0)
                 .attr('height', (d: AlluvialBlock) => Math.max(1, d.y1 - d.y0))
                 .attr('fill', (d: AlluvialBlock) => colorByCommunity(d.community_id))
-                .attr('stroke', (d: AlluvialBlock) => selectedCommunities.has(d.community_id) ? '#1F2937' : 'none')
-                .attr('stroke-width', (d: AlluvialBlock) => selectedCommunities.has(d.community_id) ? 3 : 0)
-                .attr('opacity', (d: AlluvialBlock) => selectedCommunities.size === 0 || selectedCommunities.has(d.community_id) ? 1 : 0.35)
+                .attr('stroke', (d: AlluvialBlock) => {
+                    if (selectedCommunities.has(d.community_id)) return '#1F2937'
+                    if (highlightedCommunities.has(d.community_id)) return '#FF6B6B'
+                    return 'none'
+                })
+                .attr('stroke-width', (d: AlluvialBlock) => {
+                    if (selectedCommunities.has(d.community_id)) return 3
+                    if (highlightedCommunities.has(d.community_id)) return 2
+                    return 0
+                })
+                .attr('opacity', (d: AlluvialBlock) => {
+                    if (selectedCommunities.size === 0) return 1
+                    if (selectedCommunities.has(d.community_id)) return 1
+                    if (highlightedCommunities.has(d.community_id)) return 0.8
+                    return 0.35
+                })
                 .style('cursor', 'pointer')
                 .on('click', (_, d: AlluvialBlock) => {
                     toggleCommunity(d.community_id)
@@ -258,26 +325,59 @@ export default function AlluvialChart() {
             .attr('font-size', 14)
             .attr('font-weight', 500)
             .text('Size')
-    }, [data]) // 描画はデータ変化時に一度
+
+    }, [data, timeRange, currentTime, highlightedCommunities]) // 依存関係を更新
 
     // 選択状態が変わったらスタイルだけ更新（再レイアウトしない）
     useEffect(() => {
         if (!svgRef.current) return
+
         const svg = d3.select(svgRef.current)
+
+        // コミュニティ選択状態の更新
         svg.selectAll<SVGRectElement, any>('rect.comm-rect')
             .attr('stroke', function (d: any) {
                 const cid = d3.select(this).attr('data-community')!
-                return selectedCommunities.has(cid) ? '#1F2937' : 'none'
+                if (selectedCommunities.has(cid)) return '#1F2937'
+                if (highlightedCommunities.has(cid)) return '#FF6B6B'
+                return 'none'
             })
             .attr('stroke-width', function (d: any) {
                 const cid = d3.select(this).attr('data-community')!
-                return selectedCommunities.has(cid) ? 3 : 0
+                if (selectedCommunities.has(cid)) return 3
+                if (highlightedCommunities.has(cid)) return 2
+                return 0
             })
             .attr('opacity', function () {
                 const cid = d3.select(this).attr('data-community')!
-                return selectedCommunities.size === 0 || selectedCommunities.has(cid) ? 1 : 0.35
+                if (selectedCommunities.size === 0) return 1
+                if (selectedCommunities.has(cid)) return 1
+                if (highlightedCommunities.has(cid)) return 0.8
+                return 0.35
             })
-    }, [selectedCommunities])
+
+        // 時間範囲選択状態の更新
+        svg.selectAll<SVGRectElement, any>('rect.time-background')
+            .attr('fill', function (d: any) {
+                const parentElement = this.parentElement
+                if (!parentElement) return 'transparent'
+                const time = parentElement.getAttribute('class')?.replace('slice-', '')
+                return time && timeRange.includes(time) ? '#E5E7EB' : 'transparent'
+            })
+            .attr('stroke', function (d: any) {
+                const parentElement = this.parentElement
+                if (!parentElement) return 'none'
+                const time = parentElement.getAttribute('class')?.replace('slice-', '')
+                return time && timeRange.includes(time) ? '#6B7280' : 'none'
+            })
+            .attr('stroke-width', function (d: any) {
+                const parentElement = this.parentElement
+                if (!parentElement) return 0
+                const time = parentElement.getAttribute('class')?.replace('slice-', '')
+                return time && timeRange.includes(time) ? 2 : 0
+            })
+
+    }, [selectedCommunities, highlightedCommunities, timeRange])
 
     if (loading) {
         return (
@@ -307,10 +407,13 @@ export default function AlluvialChart() {
                 />
             </div>
             <div className="mt-4 text-sm text-gray-600">
-                <ul className="list-disc list-inside">
+                <ul>
                     <li>各時刻スライスで縦方向にドラッグしてコミュニティを選択（Shiftで加算）</li>
                     <li>ブロックをクリックしてコミュニティを選択/選択解除</li>
+                    <li>時間軸をクリックして時間範囲を選択（Shift+クリックで範囲拡張）</li>
                     <li>重なり面積率 ≥ 0.5 で選択判定（ブラシはスライスにつき1つ）</li>
+                    <li>Graph Viewでノードを選択すると対応するコミュニティがハイライト</li>
+                    <li>選択された時間範囲内のデータのみGraph Viewに表示</li>
                 </ul>
             </div>
         </div>

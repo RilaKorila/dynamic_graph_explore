@@ -101,8 +101,15 @@ export default function GraphChart() {
             return edgeTime >= timeStart && edgeTime <= timeEnd
         })
 
+        // フィルタリングされたデータでグラフを構築
+        buildGraph(graph, filteredNodes, filteredEdges)
+
+    }, [data, timeRange, colorByCommunity])
+
+    // グラフ構築のヘルパー関数
+    const buildGraph = (graph: Graph, nodes: Node[], edges: Edge[]) => {
         // ノードの追加
-        filteredNodes.forEach(node => {
+        nodes.forEach(node => {
             // 座標を確実に数値に変換
             const x = parseFloat(node.x as any) || 0
             const y = parseFloat(node.y as any) || 0
@@ -128,7 +135,7 @@ export default function GraphChart() {
         })
 
         // エッジの追加
-        filteredEdges.forEach(edge => {
+        edges.forEach(edge => {
             // 両端のノードが存在する場合のみエッジを追加
             if (graph.hasNode(edge.src) && graph.hasNode(edge.dst)) {
                 graph.addEdge(edge.src, edge.dst, {
@@ -140,7 +147,7 @@ export default function GraphChart() {
         })
 
         // Sigma.jsの設定
-        const sigma = new Sigma(graph, containerRef.current, {
+        const sigma = new Sigma(graph, containerRef.current!, {
             // レンダリング設定
             renderEdgeLabels: false, // エッジラベルは非表示（パフォーマンス向上）
             defaultEdgeColor: '#666',
@@ -196,13 +203,46 @@ export default function GraphChart() {
         // ノードのクリックイベント
         sigma.on('clickNode', (event) => {
             const node = event.node
+            const nodeData = graph.getNodeAttributes(node)
 
-            // ノードのハイライト状態を切り替え（サイズは変更しない）
+            // ノードのハイライト状態を切り替え
             const currentHighlighted = highlightedNodeIds.has(node)
             if (currentHighlighted) {
                 useVizStore.getState().toggleHighlightedNode(node)
             } else {
                 useVizStore.getState().toggleHighlightedNode(node)
+            }
+
+            // 選択されたノードのコミュニティを一時的にハイライト
+            // これにより、AlluvialChartで対応するコミュニティが強調表示される
+            if (!currentHighlighted) {
+                // 他のノードのハイライトをクリアして、選択されたノードのみハイライト
+                graph.forEachNode((n, attrs) => {
+                    if (n !== node) {
+                        graph.setNodeAttribute(n, 'highlighted', false)
+                    }
+                })
+
+                // 選択されたノードのコミュニティを一時的に選択状態に追加
+                // これにより、AlluvialChartで対応するコミュニティが強調表示される
+                const currentSelected = useVizStore.getState().selectedCommunities
+                if (!currentSelected.has(nodeData.cluster)) {
+                    const newSelected = new Set(currentSelected)
+                    newSelected.add(nodeData.cluster)
+                    useVizStore.getState().setSelectedCommunities(newSelected)
+                }
+            } else {
+                // ハイライト解除時は、そのノードのコミュニティの選択も解除
+                const currentSelected = useVizStore.getState().selectedCommunities
+                if (currentSelected.has(nodeData.cluster)) {
+                    const newSelected = new Set(currentSelected)
+                    newSelected.delete(nodeData.cluster)
+                    console.log('GraphChart: コミュニティを選択状態から削除', {
+                        cluster: nodeData.cluster,
+                        newSelected: Array.from(newSelected)
+                    })
+                    useVizStore.getState().setSelectedCommunities(newSelected)
+                }
             }
         })
 
@@ -215,14 +255,14 @@ export default function GraphChart() {
 
         // グラフを画面に収める
         sigma.getCamera().animatedReset()
-
-    }, [data, timeRange, colorByCommunity])
+    }
 
     // 選択状態の変更時の表示更新
     useEffect(() => {
         if (!graphRef.current || !sigmaRef.current) return
 
         const graph = graphRef.current
+        const sigma = sigmaRef.current
 
         // ユーザアクションによる透明度の違いを定義
         const SELECTED_ALPHA = 1
@@ -252,14 +292,14 @@ export default function GraphChart() {
                 graph.setNodeAttribute(node, 'alpha', UNSELECTED_ALPHA)
                 graph.setNodeAttribute(node, 'size', UNSELECTED_NODE_SIZE)
             } else if (isSelected) {
-                // 選択されたコミュニティ：強調表示
+                // 選択されたコミュニティ：表示・強調
                 graph.setNodeAttribute(node, 'hidden', false)
                 graph.setNodeAttribute(node, 'alpha', SELECTED_ALPHA)
                 graph.setNodeAttribute(node, 'size', SELECTED_NODE_SIZE)
             } else {
-                // 非選択のコミュニティ：フェード
-                graph.setNodeAttribute(node, 'hidden', false)
-                graph.setNodeAttribute(node, 'alpha', UNSELECTED_ALPHA)
+                // 非選択のコミュニティ：非表示
+                graph.setNodeAttribute(node, 'hidden', true)
+                graph.setNodeAttribute(node, 'alpha', 0)
                 graph.setNodeAttribute(node, 'size', UNSELECTED_NODE_SIZE)
             }
 
@@ -282,17 +322,20 @@ export default function GraphChart() {
                 graph.setEdgeAttribute(edge, 'hidden', false)
                 graph.setEdgeAttribute(edge, 'alpha', UNSELECTED_ALPHA)
             } else if (selectedCommunities.has(sourceAttrs.cluster) && selectedCommunities.has(targetAttrs.cluster)) {
-                // 選択されたコミュニティ間のエッジ：強調
+                // 選択されたコミュニティ間のエッジ：表示・強調
                 graph.setEdgeAttribute(edge, 'hidden', false)
                 graph.setEdgeAttribute(edge, 'alpha', SELECTED_ALPHA)
                 graph.setEdgeAttribute(edge, 'size', SELECTED_EDGE_SIZE)
             } else {
-                // 非選択のエッジ：フェード
-                graph.setEdgeAttribute(edge, 'hidden', false)
-                graph.setEdgeAttribute(edge, 'alpha', UNSELECTED_ALPHA)
+                // 非選択のエッジ：非表示
+                graph.setEdgeAttribute(edge, 'hidden', true)
+                graph.setEdgeAttribute(edge, 'alpha', 0)
                 graph.setEdgeAttribute(edge, 'size', UNSELECTED_EDGE_SIZE)
             }
         })
+
+        // Sigma.jsの再描画を強制
+        sigma.refresh()
 
     }, [selectedCommunities, highlightedNodeIds, colorByCommunity])
 
@@ -341,11 +384,24 @@ export default function GraphChart() {
             <div ref={containerRef} className="h-96 relative bg-gray-50 rounded border">
                 {/* グラフの統計情報 */}
                 <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded px-2 py-1 text-xs text-gray-600">
-                    {data && (
+                    {data && graphRef.current && (
                         <>
-                            Nodes: {data.nodes.length} |
-                            Edges: {data.edges.length} |
-                            Time: {currentTime}
+                            Visible Nodes: {(() => {
+                                let count = 0
+                                graphRef.current!.forEachNode((node, attrs) => {
+                                    if (!attrs.hidden) count++
+                                })
+                                return count
+                            })()} |
+                            Visible Edges: {(() => {
+                                let count = 0
+                                graphRef.current!.forEachEdge((edge, attrs) => {
+                                    if (!attrs.hidden) count++
+                                })
+                                return count
+                            })()} |
+                            Time Range: {timeRange[0]} - {timeRange[1]} |
+                            Current: {currentTime}
                         </>
                     )}
                 </div>
