@@ -27,8 +27,6 @@ interface VizActions {
     setCurrentTime: (time: string) => void
     // ノードのハイライト
     toggleHighlightedNode: (id: string) => void
-    // ハイライトをクリア
-    clearHighlightedNodes: () => void
     // コミュニティの色マッピングを初期化
     initializeCommunityColors: (communityIds: string[]) => void
 }
@@ -82,10 +80,6 @@ export const useVizStore = create<VizState & VizActions>((set, get) => ({
         }
 
         set({ highlightedNodeIds: newHighlighted })
-    },
-
-    clearHighlightedNodes: () => {
-        set({ highlightedNodeIds: new Set() })
     },
 
     initializeCommunityColors: (communityIds: string[]) => {

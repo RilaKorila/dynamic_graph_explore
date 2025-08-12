@@ -10,12 +10,11 @@ const COMMUNITY_COLORS = {
 }
 
 export default function LegendAndSearch() {
-    const { selectedCommunities, clearSelection, clearHighlightedNodes } = useVizStore()
+    const { selectedCommunities, clearSelection } = useVizStore()
     const [searchQuery, setSearchQuery] = useState('')
 
     const handleClearSelection = () => {
         clearSelection()
-        clearHighlightedNodes()
     }
 
     const handleSearch = (e: React.FormEvent) => {
@@ -77,12 +76,6 @@ export default function LegendAndSearch() {
                     className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
                 >
                     Clear Selection
-                </button>
-                <button
-                    onClick={clearHighlightedNodes}
-                    className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors"
-                >
-                    Clear Highlights
                 </button>
             </div>
 
