@@ -16,6 +16,8 @@ interface VizActions {
     setBrush: (range: [string, string]) => void
     // コミュニティの選択/選択解除
     toggleCommunity: (id: string) => void
+    // 選択したコミュニティを設定
+    setSelectedCommunities: (communities: Set<string>) => void
     // 選択をクリア
     clearSelection: () => void
     // 現在の時刻を設定
@@ -49,6 +51,10 @@ export const useVizStore = create<VizState & VizActions>((set, get) => ({
         }
 
         set({ selectedCommunities: newSelected })
+    },
+
+    setSelectedCommunities: (communities: Set<string>) => {
+        set({ selectedCommunities: communities })
     },
 
     clearSelection: () => {

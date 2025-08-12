@@ -23,6 +23,12 @@ export interface AlluvialNode {
     label: string
 }
 
+// 描画用の型定義
+export type AlluvialBlock = AlluvialNode & {
+    y0: number
+    y1: number
+}
+
 // Alluvial遷移データの型定義
 export interface AlluvialLink {
     time_from: string

@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import * as d3 from 'd3'
 import { useVizStore } from '@/store/vizStore'
 import { fetchAlluvialNodes, fetchAlluvialLinks } from '@/lib/api'
-import { AlluvialNode, AlluvialLink } from '@/types'
+import { AlluvialNode, AlluvialLink, AlluvialBlock } from '@/types'
+
 
 interface AlluvialData {
     nodes: AlluvialNode[]
@@ -18,7 +19,7 @@ export default function AlluvialChart() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const { timeRange, selectedCommunities, toggleCommunity, setBrush } = useVizStore()
+    const { selectedCommunities, toggleCommunity, setSelectedCommunities } = useVizStore()
 
     // データの取得
     useEffect(() => {
@@ -41,6 +42,27 @@ export default function AlluvialChart() {
         loadData()
     }, [])
 
+    // コミュニティ → 色
+    const colorByCommunity = useMemo(() => {
+        const palette = d3.schemeTableau10
+        return (cid: string) => {
+            // C<number> 想定だが、任意の文字列もOK
+            const m = cid.match(/\d+/)?.[0]
+
+            // d3.hashCode は存在しないので自前でハッシュ関数を定義
+            function simpleHash(str: string): number {
+                let hash = 0
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+                    hash |= 0 // 32ビット整数に変換
+                }
+                return hash
+            }
+            const idx = m ? (+m % palette.length) : Math.abs(simpleHash(cid)) % palette.length
+            return palette[idx]
+        }
+    }, [])
+
     // D3 Alluvial図の描画
     useEffect(() => {
         if (!data || !svgRef.current || !containerRef.current) return
@@ -52,154 +74,154 @@ export default function AlluvialChart() {
         const width = container.clientWidth
         const height = container.clientHeight
         const margin = { top: 20, right: 20, bottom: 40, left: 60 }
-
         const chartWidth = width - margin.left - margin.right
         const chartHeight = height - margin.top - margin.bottom
 
+        svg.attr('viewBox', `0 0 ${width} ${height}`)
+
         // 時間軸の設定
-        const timeScale = d3.scaleBand()
-            .domain(['2021Q1', '2021Q2', '2021Q3'])
+        const times = Array.from(new Set(data.nodes.map(d => d.time))).sort()
+        const byTime = d3.group(data.nodes, d => d.time)
+
+        const timeScale = d3.scaleBand<string>()
+            .domain(times)
             .range([0, chartWidth])
             .padding(0.1)
 
-        // サイズ軸の設定
-        const sizeScale = d3.scaleLinear()
-            .domain([0, d3.max(data.nodes, (d: AlluvialNode) => d.size) || 0])
-            .range([0, chartHeight * 0.8])
+        // ---- 縦スケール（絶対値モード）----
+        const totals = new Map(times.map(t => [t, d3.sum(byTime.get(t) ?? [], d => +d.size)]))
+        const maxTotal = d3.max(totals.values()) ?? 0
 
-        // コミュニティ色の設定
-        const communityColors = {
-            C1: '#3B82F6',
-            C2: '#10B981',
-            C3: '#F59E0B'
-        }
+        // 各スライス内のブロック間ギャップ（px）
+        const gap = 8
 
-        // 各時刻スライスの描画
-        const timeSlices = ['2021Q1', '2021Q2', '2021Q3']
+        // 列ごとの y0/y1 を前計算
+        const layoutByTime = new Map<string, AlluvialBlock[]>()
+        times.forEach(time => {
+            const slice = (byTime.get(time) ?? []).slice()
+                .sort((a, b) => d3.descending(a.size, b.size)) // 並びは任意の固定ルール
+            const count = slice.length
+            const available = chartHeight - gap * Math.max(0, count - 1)
+            const yScale = d3.scaleLinear()
+                .domain([0, maxTotal]) // 絶対値比較：全列同一スケール
+                .range([0, available])
 
-        timeSlices.forEach((time, timeIndex) => {
-            const timeNodes = data.nodes.filter((d: AlluvialNode) => d.time === time)
-            const x = timeScale(time) || 0
+            let acc = 0
+            const blocks: AlluvialBlock[] = []
+            slice.forEach((n, i) => {
+                const h = yScale(n.size)
+                const y0 = margin.top + yScale(acc) + i * gap // gap を積み上げに反映
+                const y1 = y0 + h
+                blocks.push({ ...n, y0, y1 })
+                acc += n.size
+            })
+            layoutByTime.set(time, blocks)
+        })
 
-            // コミュニティブロックの描画
-            let currentY = margin.top
-            timeNodes.forEach((node, nodeIndex) => {
-                const blockHeight = sizeScale(node.size)
-                const blockWidth = timeScale.bandwidth() * 0.8
+        // 各スライスを描画
+        times.forEach(time => {
+            const x0 = (timeScale(time) ?? 0) + margin.left
+            const bandwidth = timeScale.bandwidth()
 
-                // ブロックの描画
-                const block = svg.append('rect')
-                    .attr('x', margin.left + x + timeScale.bandwidth() * 0.1)
-                    .attr('y', currentY)
-                    .attr('width', blockWidth)
-                    .attr('height', blockHeight)
-                    .attr('fill', communityColors[node.community_id as keyof typeof communityColors] || '#gray')
-                    .attr('stroke', selectedCommunities.has(node.community_id) ? '#1F2937' : 'none')
-                    .attr('stroke-width', selectedCommunities.has(node.community_id) ? 3 : 0)
-                    .attr('opacity', selectedCommunities.has(node.community_id) ? 1 : 0.7)
-                    .attr('class', 'community-block')
-                    .attr('data-community', node.community_id)
-                    .attr('data-time', time)
-                    .style('cursor', 'pointer')
+            const blocks = layoutByTime.get(time) ?? []
 
-                // ラベルの描画
-                svg.append('text')
-                    .attr('x', margin.left + x + timeScale.bandwidth() * 0.5)
-                    .attr('y', currentY + blockHeight / 2)
-                    .attr('text-anchor', 'middle')
-                    .attr('dominant-baseline', 'middle')
-                    .attr('fill', '#374151')
-                    .attr('font-size', '12px')
-                    .attr('font-weight', '500')
-                    .text(`${node.community_id}: ${node.size}`)
+            // スライス用 <g>
+            const sliceG = svg.append('g')
+                .attr('class', `slice-${time}`)
+                .attr('transform', `translate(${(timeScale(time) ?? 0) + margin.left},0)`)
 
-                // クリックイベント
-                block.on('click', () => {
-                    toggleCommunity(node.community_id)
+            // ブロック
+            sliceG.selectAll('rect.comm-rect')
+                .data(blocks, (d: any) => d.community_id) // (time, community_id) がユニーク前提
+                .join('rect')
+                .attr('class', 'comm-rect')
+                .attr('data-community', (d: AlluvialBlock) => d.community_id)
+                .attr('data-time', time)
+                .attr('x', bandwidth * 0.2) // 横位置は帯域の中に寄せる
+                .attr('width', bandwidth * 0.6) // 横幅は一定（Alluvialノードの箱）
+                .attr('y', (d: AlluvialBlock) => d.y0)
+                .attr('height', (d: AlluvialBlock) => Math.max(1, d.y1 - d.y0))
+                .attr('fill', (d: AlluvialBlock) => colorByCommunity(d.community_id))
+                .attr('stroke', (d: AlluvialBlock) => selectedCommunities.has(d.community_id) ? '#1F2937' : 'none')
+                .attr('stroke-width', (d: AlluvialBlock) => selectedCommunities.has(d.community_id) ? 3 : 0)
+                .attr('opacity', (d: AlluvialBlock) => selectedCommunities.size === 0 || selectedCommunities.has(d.community_id) ? 1 : 0.35)
+                .style('cursor', 'pointer')
+                .on('click', (_, d: AlluvialBlock) => {
+                    toggleCommunity(d.community_id)
                 })
 
-                // 縦方向ブラッシングの実装
-                const brushGroup = svg.append('g')
-                    .attr('class', 'brush-group')
-                    .attr('transform', `translate(${margin.left + x}, 0)`)
+            // ラベル（中央）
+            sliceG.selectAll('text.community-label')
+                .data(blocks, (d: any) => d.community_id)
+                .join('text')
+                .attr('class', 'community-label')
+                .attr('x', bandwidth * 0.5)
+                .attr('y', (d: AlluvialBlock) => (d.y0 + d.y1) / 2)
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle')
+                .attr('fill', '#374151')
+                .attr('font-size', 11)
+                .attr('font-weight', 500)
+                .text((d: AlluvialBlock) => `${d.community_id}: ${d.size}`)
 
-                const brush = d3.brushY()
-                    .extent([[0, margin.top], [timeScale.bandwidth(), margin.top + chartHeight]])
-                    .on('brush', (event: d3.D3BrushEvent<unknown>) => {
-                        if (!event.selection) return
+            // ブラシイベントの設定（スライスごとに1つ）
+            const brush = d3.brushY()
+                .extent([[0, margin.top], [bandwidth, margin.top + chartHeight]])
+                .on('brush', (ev: d3.D3BrushEvent<unknown>) => {
+                    // プログラムによる move(null) のイベントは無視
+                    if (!ev.sourceEvent) return;
 
-                        const [y0, y1] = event.selection
-                        const selectedCommunities = new Set<string>()
-
-                        // 重なり面積率の計算（既定：≥0.5）
-                        timeNodes.forEach(n => {
-                            const blockY = currentY
-                            const blockHeight = sizeScale(n.size)
-                            const overlapStart = Math.max(y0, blockY)
-                            const overlapEnd = Math.min(y1, blockY + blockHeight)
-                            const overlapHeight = Math.max(0, overlapEnd - overlapStart)
-                            const overlapRatio = overlapHeight / blockHeight
-
-                            if (overlapRatio >= 0.5) {
-                                selectedCommunities.add(n.community_id)
-                            }
+                    const sel = ev.selection as [number, number] | null
+                    const hit = new Set<string>()
+                    if (sel) {
+                        const b0 = Math.min(sel[0], sel[1])
+                        const b1 = Math.max(sel[0], sel[1])
+                        blocks.forEach(n => {
+                            const overlap = Math.max(0, Math.min(b1, n.y1) - Math.max(b0, n.y0))
+                            const ratio = overlap / Math.max(1, (n.y1 - n.y0))
+                            if (ratio >= 0.5) hit.add(n.community_id)
                         })
+                    }
+                    // 一時ハイライト（フェードのみ）
+                    sliceG.selectAll<SVGRectElement, AlluvialBlock>('rect.comm-rect')
+                        .attr('opacity', d => (selectedCommunities.size === 0 && !sel)
+                            ? 1
+                            : (sel ? (hit.has(d.community_id) ? 1 : 0.15)
+                                : (selectedCommunities.has(d.community_id) ? 1 : 0.35)))
+                })
+                .on('end', (ev: d3.D3BrushEvent<unknown>) => {
+                    //　プログラムによる clear での end を無視
+                    if (!ev.sourceEvent) return;
 
-                        // 選択状態の更新
-                        selectedCommunities.forEach(id => {
-                            if (!useVizStore.getState().selectedCommunities.has(id)) {
-                                toggleCommunity(id)
-                            }
+                    const selected = ev.selection as [number, number] | null
+                    const hit = new Set<string>()
+                    if (selected) {
+                        const b0 = Math.min(selected[0], selected[1])
+                        const b1 = Math.max(selected[0], selected[1])
+                        blocks.forEach(n => {
+                            const overlap = Math.max(0, Math.min(b1, n.y1) - Math.max(b0, n.y0))
+                            const ratio = overlap / Math.max(1, (n.y1 - n.y0))
+                            if (ratio >= 0.5) hit.add(n.community_id)
                         })
+                    }
+                    // Shift 加算 / 通常は置換
+                    const current = useVizStore.getState().selectedCommunities;
+                    let next: Set<string>;
+                    if (ev.sourceEvent && (ev.sourceEvent as any).shiftKey) {
+                        next = new Set<string>();
+                        current.forEach((v: string) => next.add(v));
+                        hit.forEach((v: string) => next.add(v));
+                    } else {
+                        next = hit;
+                    }
+                    setSelectedCommunities(next);
 
-                        // 非選択のコミュニティをフェード（安全な処理）
-                        svg.selectAll('.community-block').each(function (this: Element) {
-                            const element = d3.select(this)
-                            const communityId = element.attr('data-community')
-                            if (communityId) {
-                                const isSelected = selectedCommunities.has(communityId)
-                                element.attr('opacity', isSelected ? 1 : 0.3)
-                            }
-                        })
-                    })
-                    .on('end', (event: d3.D3BrushEvent<unknown>) => {
-                        if (!event.selection) return
+                    // ブラシ解除
+                    d3.select<SVGGElement, unknown>(sliceG.select('.ybrush').node() as any)
+                        ; (brush.move as any)(sliceG.select<SVGGElement>('.ybrush'), null)
+                })
 
-                        // ブラッシング確定時の処理
-                        const [y0, y1] = event.selection
-                        const selectedCommunities = new Set<string>()
-
-                        timeNodes.forEach(n => {
-                            const blockY = currentY
-                            const blockHeight = sizeScale(n.size)
-                            const overlapStart = Math.max(y0, blockY)
-                            const overlapEnd = Math.min(y1, blockY + blockHeight)
-                            const overlapHeight = Math.max(0, overlapEnd - blockY)
-                            const overlapRatio = overlapHeight / blockHeight
-
-                            if (overlapRatio >= 0.5) {
-                                selectedCommunities.add(n.community_id)
-                            }
-                        })
-
-                        // 選択状態を確定
-                        selectedCommunities.forEach(id => {
-                            if (!useVizStore.getState().selectedCommunities.has(id)) {
-                                toggleCommunity(id)
-                            }
-                        })
-
-                        // ブラシをクリア（安全な処理）
-                        const overlay = brushGroup.select('.overlay')
-                        if (!overlay.empty()) {
-                            overlay.remove()
-                        }
-                    })
-
-                brushGroup.call(brush)
-
-                currentY += blockHeight + 10
-            })
+            sliceG.append('g').attr('class', 'ybrush').call(brush)
         })
 
         // 時間軸の描画
@@ -208,20 +230,23 @@ export default function AlluvialChart() {
             .attr('transform', `translate(${margin.left}, ${margin.top + chartHeight})`)
             .call(timeAxis)
 
-        // サイズ軸の描画
-        const sizeAxis = d3.axisLeft(sizeScale)
+        // 左軸：絶対値（上小・下大になるように反転）
+        const sizeAxisScale = d3.scaleLinear()
+            .domain([0, maxTotal])
+            .range([margin.top + chartHeight, margin.top])
+        const sizeAxis = d3.axisLeft(sizeAxisScale)
         svg.append('g')
-            .attr('transform', `translate(${margin.left}, ${margin.top})`)
+            .attr('transform', `translate(${margin.left}, 0)`)
             .call(sizeAxis)
 
         // 軸ラベルの描画
         svg.append('text')
             .attr('x', margin.left + chartWidth / 2)
-            .attr('y', margin.top + chartHeight + margin.bottom - 5)
+            .attr('y', margin.top + chartHeight + margin.bottom - 10)
             .attr('text-anchor', 'middle')
             .attr('fill', '#374151')
-            .attr('font-size', '14px')
-            .attr('font-weight', '500')
+            .attr('font-size', 14)
+            .attr('font-weight', 500)
             .text('Time')
 
         svg.append('text')
@@ -230,29 +255,29 @@ export default function AlluvialChart() {
             .attr('y', margin.left - 40)
             .attr('text-anchor', 'middle')
             .attr('fill', '#374151')
-            .attr('font-size', '14px')
-            .attr('font-weight', '500')
+            .attr('font-size', 14)
+            .attr('font-weight', 500)
             .text('Size')
+    }, [data]) // 描画はデータ変化時に一度
 
-    }, [data, selectedCommunities, toggleCommunity])
-
-    // 選択状態の変更時の再描画
+    // 選択状態が変わったらスタイルだけ更新（再レイアウトしない）
     useEffect(() => {
-        if (data && svgRef.current) {
-            // 選択状態に応じてブロックの表示を更新
-            d3.select(svgRef.current).selectAll('.community-block').each(function (this: Element) {
-                const element = d3.select(this)
-                const communityId = element.attr('data-community')
-                if (communityId) {
-                    const isSelected = selectedCommunities.has(communityId)
-                    element
-                        .attr('stroke', isSelected ? '#1F2937' : 'none')
-                        .attr('stroke-width', isSelected ? 3 : 0)
-                        .attr('opacity', isSelected ? 1 : 0.7)
-                }
+        if (!svgRef.current) return
+        const svg = d3.select(svgRef.current)
+        svg.selectAll<SVGRectElement, any>('rect.comm-rect')
+            .attr('stroke', function (d: any) {
+                const cid = d3.select(this).attr('data-community')!
+                return selectedCommunities.has(cid) ? '#1F2937' : 'none'
             })
-        }
-    }, [selectedCommunities, data])
+            .attr('stroke-width', function (d: any) {
+                const cid = d3.select(this).attr('data-community')!
+                return selectedCommunities.has(cid) ? 3 : 0
+            })
+            .attr('opacity', function () {
+                const cid = d3.select(this).attr('data-community')!
+                return selectedCommunities.size === 0 || selectedCommunities.has(cid) ? 1 : 0.35
+            })
+    }, [selectedCommunities])
 
     if (loading) {
         return (
@@ -282,9 +307,11 @@ export default function AlluvialChart() {
                 />
             </div>
             <div className="mt-4 text-sm text-gray-600">
-                <p>• 各時刻スライスで縦方向にドラッグしてコミュニティを選択</p>
-                <p>• ブロックをクリックしてコミュニティを選択/選択解除</p>
-                <p>• 重なり面積率 ≥ 0.5 で選択判定</p>
+                <ul>
+                    <li>各時刻スライスで縦方向にドラッグしてコミュニティを選択（Shiftで加算）</li>
+                    <li>ブロックをクリックしてコミュニティを選択/選択解除</li>
+                    <li>重なり面積率 ≥ 0.5 で選択判定（ブラシはスライスにつき1つ）</li>
+                </ul>
             </div>
         </div>
     )
