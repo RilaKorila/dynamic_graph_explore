@@ -307,7 +307,7 @@ export default function AlluvialChart() {
                 />
             </div>
             <div className="mt-4 text-sm text-gray-600">
-                <ul>
+                <ul className="list-disc list-inside">
                     <li>各時刻スライスで縦方向にドラッグしてコミュニティを選択（Shiftで加算）</li>
                     <li>ブロックをクリックしてコミュニティを選択/選択解除</li>
                     <li>重なり面積率 ≥ 0.5 で選択判定（ブラシはスライスにつき1つ）</li>
