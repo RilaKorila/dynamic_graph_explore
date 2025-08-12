@@ -2,6 +2,7 @@
 
 import TimeSlider from '@/components/TimeSlider'
 import LegendAndSearch from '@/components/LegendAndSearch'
+import AlluvialChart from '@/components/AlluvialChart'
 
 export default function Home() {
     return (
@@ -21,11 +22,8 @@ export default function Home() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     {/* Alluvial ビュー（左側） */}
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h2 className="text-xl font-semibold mb-4">Alluvial View</h2>
-                        <div className="h-96 bg-gray-100 rounded flex items-center justify-center">
-                            <p className="text-gray-500">Alluvial Chart (D3) - Coming Soon</p>
-                        </div>
+                    <div>
+                        <AlluvialChart />
                     </div>
 
                     {/* Graph ビュー（右側） */}
