@@ -3,6 +3,7 @@
 import TimeSlider from '@/components/TimeSlider'
 import LegendAndSearch from '@/components/LegendAndSearch'
 import AlluvialChart from '@/components/AlluvialChart'
+import GraphChart from '@/components/GraphChart'
 
 export default function Home() {
     return (
@@ -27,11 +28,8 @@ export default function Home() {
                     </div>
 
                     {/* Graph ビュー（右側） */}
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h2 className="text-xl font-semibold mb-4">Graph View</h2>
-                        <div className="h-96 bg-gray-100 rounded flex items-center justify-center">
-                            <p className="text-gray-500">Graph (Sigma.js) - Coming Soon</p>
-                        </div>
+                    <div>
+                        <GraphChart />
                     </div>
                 </div>
 
