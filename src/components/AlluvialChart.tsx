@@ -40,7 +40,7 @@ export default function AlluvialChart() {
                 setLoading(true)
                 const [nodes, links] = await Promise.all([
                     fetchAlluvialNodes(),
-                    fetchAlluvialLinks()
+                    fetchAlluvialLinks() // FIXME: link不要かもしれない
                 ])
                 setData({ nodes, links })
 

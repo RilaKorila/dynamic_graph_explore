@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 """
 FastAPI バックエンドサーバー起動スクリプト
 """
+
 import uvicorn
-from app.main import app
 
 if __name__ == "__main__":
     uvicorn.run(

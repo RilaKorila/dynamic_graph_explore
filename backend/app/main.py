@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.responses import Response
 import os
+from app.process_datasets import process_datasets
 
 app = FastAPI(
     title="Dynamic Graph Explorer API",
@@ -22,6 +22,9 @@ app.add_middleware(
 # データディレクトリの絶対パスを設定
 current_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(current_dir, "..", "data")
+
+# データファイルの変換処理
+process_datasets()
 
 
 @app.get("/")
@@ -61,20 +64,24 @@ async def get_csv_response(file_path: str, filename: str):
 @app.get("/data/nodes")
 async def get_nodes():
     """ノードデータを取得"""
-    return await get_csv_response(os.path.join(data_dir, "nodes.csv"), "nodes.csv")
+    return await get_csv_response(
+        os.path.join(data_dir, "processed", "nodes.csv"), "nodes.csv"
+    )
 
 
 @app.get("/data/edges")
 async def get_edges():
     """エッジデータを取得"""
-    return await get_csv_response(os.path.join(data_dir, "edges.csv"), "edges.csv")
+    return await get_csv_response(
+        os.path.join(data_dir, "processed", "edges.csv"), "edges.csv"
+    )
 
 
 @app.get("/data/alluvial-nodes")
 async def get_alluvial_nodes():
     """Alluvialノードデータを取得"""
     return await get_csv_response(
-        os.path.join(data_dir, "alluvial_nodes.csv"), "alluvial_nodes.csv"
+        os.path.join(data_dir, "processed", "alluvial_nodes.csv"), "alluvial_nodes.csv"
     )
 
 
@@ -82,7 +89,7 @@ async def get_alluvial_nodes():
 async def get_alluvial_links():
     """Alluvial遷移データを取得"""
     return await get_csv_response(
-        os.path.join(data_dir, "alluvial_links.csv"), "alluvial_links.csv"
+        os.path.join(data_dir, "processed", "alluvial_links.csv"), "alluvial_links.csv"
     )
 
 

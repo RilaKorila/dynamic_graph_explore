@@ -41,6 +41,7 @@ export async function fetchEdges(): Promise<Edge[]> {
 }
 
 // Alluvialノードデータを取得
+// FIXME: リンク不要かもしれない
 export async function fetchAlluvialNodes(): Promise<AlluvialNode[]> {
     return fetchCSV<AlluvialNode>(`${API_BASE_URL}/data/alluvial-nodes`)
 }
