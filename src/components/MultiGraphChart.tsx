@@ -129,14 +129,6 @@ export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp
             <div className="mt-4 text-sm text-gray-500 text-center">
                 ← 横スクロールで他のtimestampのグラフを表示 →
             </div>
-
-            {/* 選択状態の表示 */}
-            <div className="mt-4 text-sm text-gray-600 text-center">
-                {timeRange[0] === timeRange[1]
-                    ? `Selected: ${timeRange[0]}`
-                    : `Range: ${timeRange[0]} - ${timeRange[1]}`
-                }
-            </div>
         </div>
     )
 }
