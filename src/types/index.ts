@@ -56,3 +56,12 @@ export interface SelectionState {
     timeRange: TimeRange
     currentTime: string
 }
+
+// コミュニティ情報の型定義
+export interface CommunityInfo {
+    id: string
+    time: string
+    size: number
+    label: string
+    color: string
+}
