@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import Graph from 'graphology'
 import Sigma from 'sigma'
 import { useVizStore } from '@/store/vizStore'
@@ -36,17 +36,17 @@ export default function SingleGraphChart({
 
     const { selectedCommunities, highlightedNodeIds } = useVizStore()
 
+    // colorByCommunity関数をuseCallbackで最適化
+    const colorByCommunity = useCallback((communityId: string) => {
+        return getCommunityColor(communityId)
+    }, [])
+
     // データの設定
     useEffect(() => {
         setData({ nodes, edges })
     }, [nodes, edges])
 
-    // コミュニティIDから色を取得する
-    const colorByCommunity = useMemo(() => {
-        return getCommunityColor
-    }, [])
-
-    // グラフの初期化と描画
+    // データが変更されたときにグラフを構築
     useEffect(() => {
         if (!data || !containerRef.current) return
 
@@ -56,14 +56,14 @@ export default function SingleGraphChart({
             sigmaRef.current = null
         }
 
-        // Graphologyグラフの作成
+        // Graphologyグラフの初期化
         const graph = new Graph()
         graphRef.current = graph
 
         // 指定されたtimestampのデータでグラフを構築
         buildGraph(graph, data.nodes, data.edges)
 
-    }, [data, colorByCommunity])
+    }, [data])
 
     // グラフ構築のヘルパー関数
     const buildGraph = (graph: Graph, nodes: Node[], edges: Edge[]) => {
@@ -119,7 +119,23 @@ export default function SingleGraphChart({
             // パフォーマンス設定
             labelDensity: 0.07,
             labelGridCellSize: 60,
-            labelRenderedSizeThreshold: 6
+            labelRenderedSizeThreshold: 6,
+
+            // ノードの表示制御設定
+            nodeReducer: (_, data) => ({
+                ...data,
+                hidden: data.hidden || false,
+                alpha: data.alpha !== undefined ? data.alpha : 1,
+                size: data.size || 3
+            }),
+
+            // エッジの表示制御設定
+            edgeReducer: (_, data) => ({
+                ...data,
+                hidden: data.hidden || false,
+                alpha: data.alpha !== undefined ? data.alpha : 0.6,
+                size: data.size || 1
+            })
         })
 
         sigmaRef.current = sigma
@@ -208,15 +224,13 @@ export default function SingleGraphChart({
 
         // グラフを画面に収める
         sigma.getCamera().animatedReset()
+
+        // 初期フィルタリング処理を実行
+        applyFilters(graph, sigma)
     }
 
-    // 選択状態の変更時の表示更新
-    useEffect(() => {
-        if (!graphRef.current || !sigmaRef.current) return
-
-        const graph = graphRef.current
-        const sigma = sigmaRef.current
-
+    // フィルタリング処理を適用する関数
+    const applyFilters = (graph: Graph, sigma: Sigma) => {
         // ユーザアクションによる透明度の違いを定義
         const SELECTED_ALPHA = 1
         const HIGHLIGHTED_ALPHA = 1
@@ -289,6 +303,18 @@ export default function SingleGraphChart({
 
         // Sigma.jsの再描画を強制
         sigma.refresh()
+    }
+
+    // // 選択状態の変更時の表示更新（独立したuseEffect）
+    useEffect(() => {
+        if (!graphRef.current || !sigmaRef.current) return
+
+        const graph = graphRef.current
+        const sigma = sigmaRef.current
+
+        // フィルタリング処理を適用
+        applyFilters(graph, sigma)
+
 
     }, [selectedCommunities, highlightedNodeIds, colorByCommunity])
 

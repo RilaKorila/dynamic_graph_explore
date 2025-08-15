@@ -22,7 +22,7 @@ export default function Legend() {
                 const communityInfos: CommunityInfo[] = alluvialNodes.map(node => ({
                     id: node.community_id,
                     time: node.time,
-                    size: Number(node.size),
+                    size: node.size,
                     label: node.label,
                     color: getCommunityColor(node.community_id)
                 }))

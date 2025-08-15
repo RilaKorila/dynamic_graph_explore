@@ -30,7 +30,9 @@ def process_datasets():
 
         # 各CSVファイルの作成
         does_create_new_file = i == 0
-        create_nodes_csv(graph.nodes, time, output_dir, does_create_new_file)
+        create_nodes_csv(
+            graph.nodes, time, output_dir, does_create_new_file, graph.clusters
+        )
         create_edges_csv(graph.edges, time, output_dir, does_create_new_file)
         create_alluvial_nodes_csv(
             graph.clusters, time, output_dir, does_create_new_file
@@ -39,7 +41,7 @@ def process_datasets():
         print(f"[Timestamp {time}] All CSV files created successfully!")
 
 
-def create_nodes_csv(nodes, timestamp, output_dir, does_create_new_file):
+def create_nodes_csv(nodes, timestamp, output_dir, does_create_new_file, clusters):
     """
     graph.nodesからnodes.csvを作成する
     ファイルのカラムは、node_id,x,y,time,cluster,label
@@ -48,18 +50,28 @@ def create_nodes_csv(nodes, timestamp, output_dir, does_create_new_file):
         nodes: graph.nodesのリスト
         timestamp: タイムスタンプ
         output_dir: 出力ディレクトリ
+        clusters: graph.clustersのリスト（ノードのcluster_idを決定するため）
     """
     # ノードデータをリストに変換
     nodes_data = []
 
+    # 各ノードがどのクラスターに属するかを決定
+    node_to_cluster = {}
+    for cluster in clusters:
+        for node_id in cluster.children:
+            node_to_cluster[node_id] = cluster.id
+
     for node in nodes:
+        # ノードが属するクラスターIDを取得
+        cluster_id = node_to_cluster.get(node.id, node.cluster_id)
+
         # 各ノードのデータを辞書として作成
         node_data = {
             "node_id": node.id,
             "x": node.x,
             "y": node.y,
             "time": f"timestamp{timestamp}",
-            "cluster": f"C{node.cluster_id}",
+            "cluster": f"C{cluster_id}_timestamp{timestamp}",  # clustersのIDを使用
             "label": node.label,
         }
         nodes_data.append(node_data)
@@ -108,6 +120,11 @@ def create_alluvial_nodes_csv(clusters, timestamp, output_dir, does_create_new_f
     """
     graph.clustersからalluvial_nodes.csvを作成する
     ファイルのカラムは、time,community_id,size,label
+
+    Args:
+        clusters: graph.clustersのリスト
+        timestamp: タイムスタンプ
+        output_dir: 出力ディレクトリ
     """
     # クラスターデータをリストに変換
     clusters_data = []
@@ -116,7 +133,7 @@ def create_alluvial_nodes_csv(clusters, timestamp, output_dir, does_create_new_f
         # 各クラスターのデータを辞書として作成
         cluster_data = {
             "time": f"timestamp{timestamp}",
-            "community_id": f"C{cluster.id}",
+            "community_id": f"C{cluster.id}_timestamp{timestamp}",  # timestampを含む一意のID
             "size": len(cluster.children),
             "label": f"C{cluster.id}",  # cluster.labelがない場合のデフォルト
         }

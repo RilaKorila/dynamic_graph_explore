@@ -215,7 +215,10 @@ export default function AlluvialChart() {
 
             // ラベル（中央）
             sliceG.selectAll('text.community-label')
-                .data(blocks, (d: any) => d.community_id)
+                .data(blocks, (d: any) => {
+                    // _timestamp{n} を削除する
+                    return d.community_id.replace(/_timestamp\d+$/, '')
+                })
                 .join('text')
                 .attr('class', 'community-label')
                 .attr('x', bandwidth * 0.5)
