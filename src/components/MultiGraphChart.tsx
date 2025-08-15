@@ -105,10 +105,10 @@ export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp
                             <div
                                 key={timestamp}
                                 className={`flex-shrink-0 transition-all duration-200 ${isSelected
-                                        ? isSingleSelection
-                                            ? 'ring-4 ring-blue-500 ring-opacity-50'
-                                            : 'ring-2 ring-blue-300 ring-opacity-30'
-                                        : 'ring-1 ring-gray-200'
+                                    ? isSingleSelection
+                                        ? 'ring-4 ring-blue-500 ring-opacity-50'
+                                        : 'ring-2 ring-blue-300 ring-opacity-30'
+                                    : 'ring-1 ring-gray-200'
                                     }`}
                             >
                                 <SingleGraphChart

@@ -302,10 +302,10 @@ export default function SingleGraphChart({
 
     return (
         <div className={`bg-white rounded-lg shadow-md p-4 transition-all duration-200 ${isHighlighted
-                ? highlightLevel === 'strong'
-                    ? 'bg-blue-50 border-2 border-blue-500'
-                    : 'bg-blue-25 border border-blue-300'
-                : 'border border-gray-200'
+            ? highlightLevel === 'strong'
+                ? 'bg-blue-50 border-2 border-blue-500'
+                : 'bg-blue-25 border border-blue-300'
+            : 'border border-gray-200'
             }`}>
             <h3 className={`text-lg font-semibold mb-3 ${isHighlighted ? 'text-blue-700' : 'text-gray-900'
                 }`}>
