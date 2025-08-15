@@ -3,7 +3,7 @@
 import TimeSlider from '@/components/TimeSlider'
 import Legend from '@/components/Legend'
 import AlluvialChart from '@/components/AlluvialChart'
-import GraphChart from '@/components/GraphChart'
+import MultiGraphChart from '@/components/MultiGraphChart'
 
 export default function Home() {
     return (
@@ -22,14 +22,14 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    {/* Alluvial ビュー（左側） */}
+                    {/* Alluvial ビュー（左側: 1/3） */}
                     <div className="lg:col-span-1">
                         <AlluvialChart />
                     </div>
 
-                    {/* Graph ビュー（右側） */}
+                    {/* Multi Graph ビュー（右側: 2/3） */}
                     <div className="lg:col-span-2">
-                        <GraphChart />
+                        <MultiGraphChart timestamps={['timestamp1', 'timestamp2']} />
                     </div>
                 </div>
 
