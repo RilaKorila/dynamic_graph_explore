@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { useVizStore } from '@/store/vizStore'
 import { fetchNodes, fetchEdges } from '@/lib/api'
 import { Node, Edge } from '@/types'
 import SingleGraphChart from './SingleGraphChart'
@@ -15,9 +16,11 @@ interface GraphData {
 }
 
 export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp2'] }: MultiGraphChartProps) {
+    const { timeRange } = useVizStore()  // timeRangeを取得
     const [data, setData] = useState<GraphData | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
 
     // データの取得
     useEffect(() => {
@@ -39,6 +42,26 @@ export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp
 
         loadData()
     }, [])
+
+    // 選択されたtimestampに自動スクロール
+    useEffect(() => {
+        if (scrollContainerRef.current && timeRange[0] === timeRange[1]) {
+            const selectedTimestamp = timeRange[0]
+            const timestampIndex = timestamps.indexOf(selectedTimestamp)
+
+            if (timestampIndex !== -1) {
+                const container = scrollContainerRef.current
+                const scrollWidth = container.scrollWidth
+                const containerWidth = container.clientWidth
+                const scrollPosition = (timestampIndex / (timestamps.length - 1)) * (scrollWidth - containerWidth)
+
+                container.scrollTo({
+                    left: scrollPosition,
+                    behavior: 'smooth'
+                })
+            }
+        }
+    }, [timeRange, timestamps])
 
     // 各timestampのデータを抽出
     const getDataForTimestamp = (timestamp: string) => {
@@ -71,17 +94,30 @@ export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp
             <h2 className="text-xl font-semibold mb-4">Graphs View</h2>
 
             {/* 横スクロール可能なコンテナ */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" ref={scrollContainerRef}>
                 <div className="flex gap-8 min-w-max pb-4 px-4">
                     {timestamps.map((timestamp) => {
                         const { nodes, edges } = getDataForTimestamp(timestamp)
+                        const isSelected = timeRange.includes(timestamp)
+                        const isSingleSelection = timeRange[0] === timestamp && timeRange[1] === timestamp
+
                         return (
-                            <div key={timestamp} className="flex-shrink-0">
+                            <div
+                                key={timestamp}
+                                className={`flex-shrink-0 transition-all duration-200 ${isSelected
+                                        ? isSingleSelection
+                                            ? 'ring-4 ring-blue-500 ring-opacity-50'
+                                            : 'ring-2 ring-blue-300 ring-opacity-30'
+                                        : 'ring-1 ring-gray-200'
+                                    }`}
+                            >
                                 <SingleGraphChart
                                     timestamp={timestamp}
                                     nodes={nodes}
                                     edges={edges}
                                     title={`Graph ${timestamp}`}
+                                    isHighlighted={isSelected}
+                                    highlightLevel={isSingleSelection ? 'strong' : 'weak'}
                                 />
                             </div>
                         )
@@ -92,6 +128,14 @@ export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp
             {/* スクロールインジケーター */}
             <div className="mt-4 text-sm text-gray-500 text-center">
                 ← 横スクロールで他のtimestampのグラフを表示 →
+            </div>
+
+            {/* 選択状態の表示 */}
+            <div className="mt-4 text-sm text-gray-600 text-center">
+                {timeRange[0] === timeRange[1]
+                    ? `Selected: ${timeRange[0]}`
+                    : `Range: ${timeRange[0]} - ${timeRange[1]}`
+                }
             </div>
         </div>
     )

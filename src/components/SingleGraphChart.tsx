@@ -12,6 +12,8 @@ interface SingleGraphChartProps {
     nodes: Node[]
     edges: Edge[]
     title?: string
+    isHighlighted?: boolean
+    highlightLevel?: 'strong' | 'weak'
 }
 
 interface GraphData {
@@ -19,7 +21,14 @@ interface GraphData {
     edges: Edge[]
 }
 
-export default function SingleGraphChart({ timestamp, nodes, edges, title }: SingleGraphChartProps) {
+export default function SingleGraphChart({
+    timestamp,
+    nodes,
+    edges,
+    title,
+    isHighlighted = false,
+    highlightLevel = 'weak'
+}: SingleGraphChartProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const sigmaRef = useRef<Sigma | null>(null)
     const graphRef = useRef<Graph | null>(null)
@@ -292,8 +301,21 @@ export default function SingleGraphChart({ timestamp, nodes, edges, title }: Sin
     }
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-4">
-            <h3 className="text-lg font-semibold mb-3">{title || `Graph ${timestamp}`}</h3>
+        <div className={`bg-white rounded-lg shadow-md p-4 transition-all duration-200 ${isHighlighted
+                ? highlightLevel === 'strong'
+                    ? 'bg-blue-50 border-2 border-blue-500'
+                    : 'bg-blue-25 border border-blue-300'
+                : 'border border-gray-200'
+            }`}>
+            <h3 className={`text-lg font-semibold mb-3 ${isHighlighted ? 'text-blue-700' : 'text-gray-900'
+                }`}>
+                {title || `Graph ${timestamp}`}
+                {isHighlighted && (
+                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        {highlightLevel === 'strong' ? 'Selected' : 'In Range'}
+                    </span>
+                )}
+            </h3>
             <div ref={containerRef} className="h-[400px] w-[500px] relative bg-gray-50 rounded border">
                 {/* グラフの統計情報 */}
                 <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded px-2 py-1 text-xs text-gray-600">

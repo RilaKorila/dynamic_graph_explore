@@ -363,19 +363,45 @@ export default function AlluvialChart() {
                 const parentElement = this.parentElement
                 if (!parentElement) return 'transparent'
                 const time = parentElement.getAttribute('class')?.replace('slice-', '')
-                return time && timeRange.includes(time) ? '#E5E7EB' : 'transparent'
+
+                // 選択された時間範囲内かどうかをチェック
+                if (time && timeRange.includes(time)) {
+                    if (time === timeRange[0] && time === timeRange[1]) {
+                        return '#3B82F6'  // 単一時間選択（青色で強調）
+                    } else {
+                        return '#E5E7EB'  // 選択された時間範囲
+                    }
+                } else {
+                    return 'transparent'  // 非選択
+                }
             })
             .attr('stroke', function (d: any) {
                 const parentElement = this.parentElement
                 if (!parentElement) return 'none'
                 const time = parentElement.getAttribute('class')?.replace('slice-', '')
-                return time && timeRange.includes(time) ? '#6B7280' : 'none'
+
+                if (time && timeRange.includes(time)) {
+                    if (time === timeRange[0] && time === timeRange[1]) {
+                        return '#1D4ED8'  // 単一時間選択（濃い青色）
+                    } else {
+                        return '#6B7280'  // 範囲選択（グレー）
+                    }
+                }
+                return 'none'
             })
             .attr('stroke-width', function (d: any) {
                 const parentElement = this.parentElement
                 if (!parentElement) return 0
                 const time = parentElement.getAttribute('class')?.replace('slice-', '')
-                return time && timeRange.includes(time) ? 2 : 0
+
+                if (time && timeRange.includes(time)) {
+                    if (time === timeRange[0] && time === timeRange[1]) {
+                        return 3  // 単一時間選択（太い線）
+                    } else {
+                        return 2  // 範囲選択（普通の線）
+                    }
+                }
+                return 0
             })
 
     }, [selectedCommunities, highlightedCommunities, timeRange])
