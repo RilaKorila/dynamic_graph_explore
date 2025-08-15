@@ -340,7 +340,7 @@ export default function GraphChart() {
 
     if (loading) {
         return (
-            <div className="h-96 bg-gray-100 rounded flex items-center justify-center">
+            <div className="h-[600px] bg-gray-100 rounded flex items-center justify-center">
                 <div className="text-gray-500">Loading Graph...</div>
             </div>
         )
@@ -348,7 +348,7 @@ export default function GraphChart() {
 
     if (error) {
         return (
-            <div className="h-96 bg-gray-100 rounded flex items-center justify-center">
+            <div className="h-[600px] bg-gray-100 rounded flex items-center justify-center">
                 <div className="text-red-500">{error}</div>
             </div>
         )
@@ -357,7 +357,7 @@ export default function GraphChart() {
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Graph View</h2>
-            <div ref={containerRef} className="h-96 relative bg-gray-50 rounded border">
+            <div ref={containerRef} className="h-[600px] relative bg-gray-50 rounded border">
                 {/* グラフの統計情報 */}
                 <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded px-2 py-1 text-xs text-gray-600">
                     {data && graphRef.current && (
@@ -381,19 +381,6 @@ export default function GraphChart() {
                         </>
                     )}
                 </div>
-
-                {/* 操作説明 */}
-                <div className="absolute bottom-2 left-2 bg-white bg-opacity-90 rounded px-2 py-1 text-xs text-gray-600">
-                    <div>🖱️ Hover: Highlight | 🖱️ Click: Select | 🔍 Scroll: Zoom</div>
-                </div>
-            </div>
-            <div className="mt-4 text-sm text-gray-600">
-                <ul className="list-disc list-inside">
-                    <li>ノードをホバーして関連エッジをハイライト</li>
-                    <li>ノードをクリックして選択状態を切り替え</li>
-                    <li>スクロールでズーム、ドラッグでパン</li>
-                    <li>時間範囲とコミュニティ選択に応じて表示が更新</li>
-                </ul>
             </div>
         </div>
     )

@@ -8,7 +8,7 @@ import GraphChart from '@/components/GraphChart'
 export default function Home() {
     return (
         <main className="min-h-screen bg-gray-50">
-            <div className="container mx-auto px-4 py-8">
+            <div className="w-full mx-auto px-4 py-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">
                     Dynamic Graph Explorer
                 </h1>
@@ -21,14 +21,14 @@ export default function Home() {
                     <TimeSlider />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                     {/* Alluvial ビュー（左側） */}
-                    <div>
+                    <div className="lg:col-span-1">
                         <AlluvialChart />
                     </div>
 
                     {/* Graph ビュー（右側） */}
-                    <div>
+                    <div className="lg:col-span-2">
                         <GraphChart />
                     </div>
                 </div>
