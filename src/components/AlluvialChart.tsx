@@ -101,17 +101,18 @@ export default function AlluvialChart() {
             .padding(0.1)
 
         // ---- 縦スケール（絶対値モード）----
-        const totals = new Map(times.map(t => [t, d3.sum(byTime.get(t) ?? [], d => +d.size)]))
+        const totals = new Map(times.map(t => [t, d3.sum(byTime.get(t) ?? [], d => Number(d.size))]))
         const maxTotal = d3.max(totals.values()) ?? 0
 
         // 各スライス内のブロック間ギャップ（px）
-        const gap = 8
+        const gap = 1
 
         // 列ごとの y0/y1 を前計算
         const layoutByTime = new Map<string, AlluvialBlock[]>()
         times.forEach(time => {
+            // sizeが大きい順にソート（上から並べる）
             const slice = (byTime.get(time) ?? []).slice()
-                .sort((a, b) => d3.descending(a.size, b.size)) // 並びは任意の固定ルール
+                .sort((a, b) => d3.descending(Number(a.size), Number(b.size)))
             const count = slice.length
             const available = chartHeight - gap * Math.max(0, count - 1)
             const yScale = d3.scaleLinear()
@@ -125,14 +126,13 @@ export default function AlluvialChart() {
                 const y0 = margin.top + yScale(acc) + i * gap // gap を積み上げに反映
                 const y1 = y0 + h
                 blocks.push({ ...n, y0, y1 })
-                acc += n.size
+                acc += Number(n.size)
             })
             layoutByTime.set(time, blocks)
         })
 
         // 各スライスを描画
         times.forEach(time => {
-            const x0 = (timeScale(time) ?? 0) + margin.left
             const bandwidth = timeScale.bandwidth()
 
             const blocks = layoutByTime.get(time) ?? []
@@ -177,8 +177,11 @@ export default function AlluvialChart() {
                     setCurrentTime(time)
                 })
 
-            // ブロック
-            const blockSelection = sliceG.selectAll('rect.comm-rect')
+            // ブロックの最小高さ
+            const MIN_BLOCK_PX = 1
+
+            // ブロック（sizeが大きい順に上から配置）
+            sliceG.selectAll('rect.comm-rect')
                 .data(blocks, (d: any) => d.community_id) // (time, community_id) がユニーク前提
                 .join('rect')
                 .attr('class', 'comm-rect')
@@ -187,7 +190,7 @@ export default function AlluvialChart() {
                 .attr('x', bandwidth * 0.2) // 横位置は帯域の中に寄せる
                 .attr('width', bandwidth * 0.6) // 横幅は一定（Alluvialノードの箱）
                 .attr('y', (d: AlluvialBlock) => d.y0)
-                .attr('height', (d: AlluvialBlock) => Math.max(1, d.y1 - d.y0))
+                .attr('height', (d: AlluvialBlock) => Math.max(MIN_BLOCK_PX, d.y1 - d.y0))
                 .attr('fill', (d: AlluvialBlock) => colorByCommunity(d.community_id))
                 .attr('stroke', (d: AlluvialBlock) => {
                     if (selectedCommunities.has(d.community_id)) return '#1F2937'
@@ -223,6 +226,11 @@ export default function AlluvialChart() {
                 .attr('font-size', 11)
                 .attr('font-weight', 500)
                 .text((d: AlluvialBlock) => `${d.community_id}: ${d.size}`)
+                .style('opacity', (d: AlluvialBlock) => { // Communityの高さが足りない場合はラベルを非表示
+                    const blockHeight = d.y1 - d.y0
+                    const MIN_LABEL_HEIGHT = 8  // ラベルを表示する最小高さ
+                    return blockHeight >= MIN_LABEL_HEIGHT ? 1 : 0  // 高さが足りない場合は非表示
+                })
 
             // ブラシイベントの設定（スライスごとに1つ）
             const brush = d3.brushY()
@@ -374,7 +382,7 @@ export default function AlluvialChart() {
 
     if (loading) {
         return (
-            <div className="h-96 bg-gray-100 rounded flex items-center justify-center">
+            <div className="h-[600px] bg-gray-100 rounded flex items-center justify-center">
                 <div className="text-gray-500">Loading Alluvial Chart...</div>
             </div>
         )
@@ -382,7 +390,7 @@ export default function AlluvialChart() {
 
     if (error) {
         return (
-            <div className="h-96 bg-gray-100 rounded flex items-center justify-center">
+            <div className="h-[600px] bg-gray-100 rounded flex items-center justify-center">
                 <div className="text-red-500">{error}</div>
             </div>
         )
@@ -391,23 +399,13 @@ export default function AlluvialChart() {
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Alluvial View</h2>
-            <div ref={containerRef} className="h-96 relative">
+            <div ref={containerRef} className="h-[600px] relative">
                 <svg
                     ref={svgRef}
                     width="100%"
                     height="100%"
                     className="alluvial-container"
                 />
-            </div>
-            <div className="mt-4 text-sm text-gray-600">
-                <ul>
-                    <li>各時刻スライスで縦方向にドラッグしてコミュニティを選択（Shiftで加算）</li>
-                    <li>ブロックをクリックしてコミュニティを選択/選択解除</li>
-                    <li>時間軸をクリックして時間範囲を選択（Shift+クリックで範囲拡張）</li>
-                    <li>重なり面積率 ≥ 0.5 で選択判定（ブラシはスライスにつき1つ）</li>
-                    <li>Graph Viewでノードを選択すると対応するコミュニティがハイライト</li>
-                    <li>選択された時間範囲内のデータのみGraph Viewに表示</li>
-                </ul>
             </div>
         </div>
     )
