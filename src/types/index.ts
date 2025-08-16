@@ -65,3 +65,83 @@ export interface CommunityInfo {
     label: string
     color: string
 }
+
+// 動的コミュニティ可視化用の型定義（仕様書準拠）
+export type NodeId = string;
+export type CommunityId = string;
+export type Timestamp = string; // ISO 8601 (per slice)
+
+export interface NodeMeta {
+    id: NodeId;
+    label?: string;
+}
+
+export interface TimedEdge {
+    t: Timestamp;
+    source: NodeId;
+    target: NodeId;
+    w?: number;
+}
+
+export interface TimedMembership {
+    t: Timestamp;
+    node: NodeId;
+    community: CommunityId;
+}
+
+export interface Partition {
+    t: Timestamp;
+    communities: Record<CommunityId, NodeId[]>;
+}
+
+export interface DynamicCommunity {
+    id: string; // D1, D2, ...
+    timeline: Array<{ t: Timestamp; community?: CommunityId }>; // gaps allowed
+    stability?: number; // computed
+    color?: string; // assigned hue
+}
+
+export interface VertexStability {
+    node: NodeId;
+    stability: number;
+}
+
+export interface LayoutOrdering {
+    // y-order for each t: array of nodes in vertical order (grouped by community)
+    yOrderByT: Record<Timestamp, NodeId[]>;
+    // vertical extents per community block
+    blockByT: Record<Timestamp, Record<CommunityId, { y0: number; y1: number }>>;
+}
+
+export interface TransitionRank {
+    // per t: ranks for curves (higher drawn earlier or later per policy)
+    rankByT: Record<Timestamp, Record<NodeId, number>>;
+}
+
+export interface VizConfig {
+    theta: number;                  // 追跡しきい値 (0..0.9)
+    colorMode: 'dynamic' | 'cStab' | 'vStab';
+    edgeThreshold: { intra: number; inter: number };
+    nodeHeight: number;
+    gaps: { node: number; community: number };
+    drawOrderPolicy: 'groupsFirst' | 'groupsBack';
+}
+
+export interface CommunityBlock {
+    t: Timestamp;
+    communityId: CommunityId;
+    y0: number;
+    y1: number;
+    nodes: NodeId[];
+    density: number; // 相対密度 ρ
+    stability: number; // コミュニティ安定性
+}
+
+export interface TransitionCurve {
+    source: { t: Timestamp; y: number; community: CommunityId };
+    target: { t: Timestamp; y: number; community: CommunityId };
+    nodes: NodeId[];
+    weight: number;
+    rank: number;
+    dynamicCommunityId: string;
+}
