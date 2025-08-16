@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Graph from 'graphology'
 import Sigma from 'sigma'
+import { SquareArrowUpRight } from 'lucide-react'
 import { useVizStore } from '@/store/vizStore'
 import { Node, Edge } from '@/types'
 import { getCommunityColor } from '@/lib/colors'
@@ -25,7 +26,6 @@ export default function SingleGraphChart({
     timestamp,
     nodes,
     edges,
-    title,
     isHighlighted = false,
     highlightLevel = 'weak'
 }: SingleGraphChartProps) {
@@ -318,6 +318,13 @@ export default function SingleGraphChart({
 
     }, [selectedCommunities, highlightedNodeIds, colorByCommunity])
 
+    // 別タブで大画面表示する関数
+    const openInNewTab = () => {
+        // Next.jsの動的ルートを使用
+        const url = `/graph/${timestamp}`
+        window.open(url, '_blank')
+    }
+
     if (!data) {
         return (
             <div className="h-[400px] bg-gray-100 rounded flex items-center justify-center">
@@ -333,15 +340,23 @@ export default function SingleGraphChart({
                 : 'bg-blue-25 border border-blue-300'
             : 'border border-gray-200'
             }`}>
-            <h3 className={`text-lg font-semibold mb-3 ${isHighlighted ? 'text-blue-700' : 'text-gray-900'
-                }`}>
-                {title || `Graph ${timestamp}`}
-                {isHighlighted && (
-                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                        {highlightLevel === 'strong' ? 'Selected' : 'In Range'}
-                    </span>
-                )}
-            </h3>
+            <div className={`flex items-center justify-between mb-3`}>
+                <h3 className={`text-lg font-semibold ${isHighlighted ? 'text-blue-700' : 'text-gray-900'}`}>
+                    {`Graph ${timestamp}`}
+                    {isHighlighted && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {highlightLevel === 'strong' ? 'Selected' : 'In Range'}
+                        </span>
+                    )}
+                </h3>
+                <button
+                    onClick={openInNewTab}
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                    title="Open in new tab (full screen)"
+                >
+                    <SquareArrowUpRight className="h-4 w-4" />
+                </button>
+            </div>
             <div ref={containerRef} className="h-[400px] w-[500px] relative bg-gray-50 rounded border">
                 {/* グラフの統計情報 */}
                 <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded px-2 py-1 text-xs text-gray-600">
