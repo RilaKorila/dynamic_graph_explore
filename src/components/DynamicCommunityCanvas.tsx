@@ -16,7 +16,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState<CanvasDimensions>({
         width: 800,
-        height: 600,
+        height: 1000,
         margin: { top: 24, right: 24, bottom: 24, left: 120 }
     });
 
@@ -87,18 +87,36 @@ export const DynamicCommunityCanvas: React.FC = () => {
                 .interpolator(d3.interpolateRgb.gamma(2.2)("#f0f0f0", "#404040"));
 
             ctx.fillStyle = densityColor(block.density);
-            ctx.fillRect(x - 20, y0, 40, blockHeight);
+            ctx.fillRect(x - 25, y0, 50, blockHeight);
 
             // 境界線
             ctx.strokeStyle = selectedCommunityId === block.communityId ? '#3b82f6' : '#d1d5db';
             ctx.lineWidth = selectedCommunityId === block.communityId ? 3 : 1;
-            ctx.strokeRect(x - 20, y0, 40, blockHeight);
+            ctx.strokeRect(x - 25, y0, 50, blockHeight);
 
-            // ラベル
+            // コミュニティIDラベル
             ctx.fillStyle = '#374151';
-            ctx.font = '12px sans-serif';
+            ctx.font = 'bold 14px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(block.communityId, x, y0 - 5);
+            ctx.fillText(block.label, x, y0 - 8);
+
+            // 密度と安定性のインジケーター
+            const densityBarWidth = 40;
+            const densityBarHeight = 4;
+            const densityBarY = y1 - 15;
+
+            // 密度バー
+            ctx.fillStyle = '#d1d5db';
+            ctx.fillRect(x - densityBarWidth / 2, densityBarY, densityBarWidth, densityBarHeight);
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(x - densityBarWidth / 2, densityBarY, densityBarWidth * block.density, densityBarHeight);
+
+            // 安定性バー
+            const stabilityBarY = y1 - 8;
+            ctx.fillStyle = '#d1d5db';
+            ctx.fillRect(x - densityBarWidth / 2, stabilityBarY, densityBarWidth, densityBarHeight);
+            ctx.fillStyle = '#10b981';
+            ctx.fillRect(x - densityBarWidth / 2, stabilityBarY, densityBarWidth * block.stability, densityBarHeight);
         });
 
         ctx.restore();
@@ -173,6 +191,20 @@ export const DynamicCommunityCanvas: React.FC = () => {
                 drawBezierCurve(ctx, x1, y1, x2, y2);
                 ctx.stroke();
             }
+
+            // 遷移の重みラベル
+            const midX = (x1 + x2) / 2;
+            const midY = (y1 + y2) / 2;
+
+            // 背景
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillRect(midX - 15, midY - 8, 30, 16);
+
+            // テキスト
+            ctx.fillStyle = color;
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(curve.weight.toString(), midX, midY + 3);
         });
 
         ctx.restore();
@@ -217,13 +249,80 @@ export const DynamicCommunityCanvas: React.FC = () => {
 
             // 時刻ラベル
             ctx.fillStyle = '#6b7280';
-            ctx.font = '12px sans-serif';
+            ctx.font = 'bold 12px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(timestamp, x, dimensions.height - dimensions.margin.bottom + 20);
         });
 
+        // 軸ラベル
+        ctx.fillStyle = '#374151';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+
+        // Y軸ラベル
+        ctx.save();
+        ctx.translate(dimensions.margin.left - 20, dimensions.height / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.restore();
+
+        // X軸ラベル
+        ctx.fillText('timestamps', dimensions.width / 2, dimensions.height - 5);
+
         ctx.restore();
     }, [timestamps, dimensions]);
+
+    // 凡例の描画
+    const drawLegend = useCallback((ctx: CanvasRenderingContext2D) => {
+        ctx.save();
+
+        const legendX = dimensions.width - 150;
+        const legendY = 50;
+
+        // 凡例の背景
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillRect(legendX - 10, legendY - 10, 140, 120);
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(legendX - 10, legendY - 10, 140, 120);
+
+        // 凡例タイトル
+        ctx.fillStyle = '#374151';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('凡例', legendX, legendY);
+
+        // 密度バー
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(legendX, legendY + 15, 20, 8);
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('密度', legendX + 25, legendY + 22);
+
+        // 安定性バー
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(legendX, legendY + 30, 20, 8);
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('安定性', legendX + 25, legendY + 37);
+
+        // 遷移曲線
+        ctx.strokeStyle = '#6b7280';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(legendX, legendY + 45);
+        ctx.lineTo(legendX + 20, legendY + 45);
+        ctx.stroke();
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('遷移', legendX + 25, legendY + 50);
+
+        // 選択状態
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(legendX, legendY + 60, 20, 12);
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('選択', legendX + 25, legendY + 68);
+
+        ctx.restore();
+    }, [dimensions]);
 
     // メインの描画関数
     const draw = useCallback(() => {
@@ -251,7 +350,10 @@ export const DynamicCommunityCanvas: React.FC = () => {
 
         // 遷移曲線の描画
         drawTransitionCurves(ctx, scalesData);
-    }, [dimensions, scales, drawAxes, drawCommunityBlocks, drawTransitionCurves]);
+
+        // 凡例の描画
+        drawLegend(ctx);
+    }, [dimensions, scales, drawAxes, drawCommunityBlocks, drawTransitionCurves, drawLegend]);
 
     // 描画の実行
     useEffect(() => {
@@ -280,7 +382,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
             const blockY0 = scalesData.yScale(block.y0);
             const blockY1 = scalesData.yScale(block.y1);
 
-            return x >= blockX - 20 && x <= blockX + 20 &&
+            return x >= blockX - 25 && x <= blockX + 25 &&
                 y >= blockY0 && y <= blockY1;
         });
 
@@ -311,7 +413,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
             const blockY0 = scalesData.yScale(block.y0);
             const blockY1 = scalesData.yScale(block.y1);
 
-            return x >= blockX - 20 && x <= blockX + 20 &&
+            return x >= blockX - 25 && x <= blockX + 25 &&
                 y >= blockY0 && y <= blockY1;
         });
 

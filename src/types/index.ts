@@ -135,6 +135,7 @@ export interface CommunityBlock {
     nodes: NodeId[];
     density: number; // 相対密度 ρ
     stability: number; // コミュニティ安定性
+    label: string;
 }
 
 export interface TransitionCurve {

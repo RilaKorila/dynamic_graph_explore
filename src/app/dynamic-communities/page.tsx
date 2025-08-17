@@ -15,282 +15,32 @@ import {
     VertexStability
 } from '../../types';
 
-// サンプルデータ（実際の実装ではAPIから取得）
-const sampleData = {
-    timestamps: ['2021Q1', '2021Q2', '2021Q3', '2021Q4'] as Timestamp[],
-
-    communityBlocks: [
-        {
-            t: '2021Q1' as Timestamp,
-            communityId: 'C1' as CommunityId,
-            y0: 0.0,
-            y1: 0.3,
-            nodes: ['1', '2', '3', '4', '5'],
-            density: 0.8,
-            stability: 0.9
-        },
-        {
-            t: '2021Q1' as Timestamp,
-            communityId: 'C2' as CommunityId,
-            y0: 0.4,
-            y1: 0.7,
-            nodes: ['6', '7', '8', '9'],
-            density: 0.6,
-            stability: 0.7,
-        },
-        {
-            t: '2021Q1' as Timestamp,
-            communityId: 'C3' as CommunityId,
-            y0: 0.8,
-            y1: 1.0,
-            nodes: ['10', '11', '12'],
-            density: 0.4,
-            stability: 0.5,
-        },
-        {
-            t: '2021Q2' as Timestamp,
-            communityId: 'C1' as CommunityId,
-            y0: 0.0,
-            y1: 0.35,
-            nodes: ['1', '2', '3', '4', '5', '13'],
-            density: 0.75,
-            stability: 0.85,
-        },
-        {
-            t: '2021Q2' as Timestamp,
-            communityId: 'C2' as CommunityId,
-            y0: 0.45,
-            y1: 0.75,
-            nodes: ['6', '7', '8', '9'],
-            density: 0.65,
-            stability: 0.75,
-        },
-        {
-            t: '2021Q2' as Timestamp,
-            communityId: 'C4' as CommunityId,
-            y0: 0.85,
-            y1: 1.0,
-            nodes: ['14', '15'],
-            density: 0.3,
-            stability: 0.4,
-        },
-        {
-            t: '2021Q3' as Timestamp,
-            communityId: 'C1' as CommunityId,
-            y0: 0.0,
-            y1: 0.4,
-            nodes: ['1', '2', '3', '4', '5', '13', '16'],
-            density: 0.7,
-            stability: 0.8,
-        },
-        {
-            t: '2021Q3' as Timestamp,
-            communityId: 'C2' as CommunityId,
-            y0: 0.5,
-            y1: 0.8,
-            nodes: ['6', '7', '8', '9', '17'],
-            density: 0.6,
-            stability: 0.7,
-        },
-        {
-            t: '2021Q3' as Timestamp,
-            communityId: 'C5' as CommunityId,
-            y0: 0.9,
-            y1: 1.0,
-            nodes: ['18'],
-            density: 0.2,
-            stability: 0.3,
-        },
-        {
-            t: '2021Q4' as Timestamp,
-            communityId: 'C1' as CommunityId,
-            y0: 0.0,
-            y1: 0.45,
-            nodes: ['1', '2', '3', '4', '5', '13', '16', '19'],
-            density: 0.65,
-            stability: 0.75,
-        },
-        {
-            t: '2021Q4' as Timestamp,
-            communityId: 'C2' as CommunityId,
-            y0: 0.55,
-            y1: 0.85,
-            nodes: ['6', '7', '8', '9', '17', '20'],
-            density: 0.55,
-            stability: 0.65,
-        },
-        {
-            t: '2021Q4' as Timestamp,
-            communityId: 'C6' as CommunityId,
-            y0: 0.95,
-            y1: 1.0,
-            nodes: ['21'],
-            density: 0.15,
-            stability: 0.25,
-        }
-    ] as CommunityBlock[],
-
-    transitionCurves: [
-        {
-            source: { t: '2021Q1' as Timestamp, y: 0.15, community: 'C1' as CommunityId },
-            target: { t: '2021Q2' as Timestamp, y: 0.175, community: 'C1' as CommunityId },
-            nodes: ['1', '2', '3', '4', '5'],
-            weight: 5.0,
-            rank: 1,
-            dynamicCommunityId: 'D1'
-        },
-        {
-            source: { t: '2021Q2' as Timestamp, y: 0.175, community: 'C1' as CommunityId },
-            target: { t: '2021Q3' as Timestamp, y: 0.2, community: 'C1' as CommunityId },
-            nodes: ['1', '2', '3', '4', '5', '13'],
-            weight: 6.0,
-            rank: 1,
-            dynamicCommunityId: 'D1'
-        },
-        {
-            source: { t: '2021Q3' as Timestamp, y: 0.2, community: 'C1' as CommunityId },
-            target: { t: '2021Q4' as Timestamp, y: 0.225, community: 'C1' as CommunityId },
-            nodes: ['1', '2', '3', '4', '5', '13', '16'],
-            weight: 7.0,
-            rank: 1,
-            dynamicCommunityId: 'D1'
-        },
-        {
-            source: { t: '2021Q1' as Timestamp, y: 0.55, community: 'C2' as CommunityId },
-            target: { t: '2021Q2' as Timestamp, y: 0.6, community: 'C2' as CommunityId },
-            nodes: ['6', '7', '8', '9'],
-            weight: 4.0,
-            rank: 2,
-            dynamicCommunityId: 'D2'
-        },
-        {
-            source: { t: '2021Q2' as Timestamp, y: 0.6, community: 'C2' as CommunityId },
-            target: { t: '2021Q3' as Timestamp, y: 0.65, community: 'C2' as CommunityId },
-            nodes: ['6', '7', '8', '9'],
-            weight: 4.0,
-            rank: 2,
-            dynamicCommunityId: 'D2'
-        },
-        {
-            source: { t: '2021Q3' as Timestamp, y: 0.65, community: 'C2' as CommunityId },
-            target: { t: '2021Q4' as Timestamp, y: 0.7, community: 'C2' as CommunityId },
-            nodes: ['6', '7', '8', '9', '17'],
-            weight: 5.0,
-            rank: 2,
-            dynamicCommunityId: 'D2'
-        },
-        {
-            source: { t: '2021Q1' as Timestamp, y: 0.9, community: 'C3' as CommunityId },
-            target: { t: '2021Q2' as Timestamp, y: 0.925, community: 'C4' as CommunityId },
-            nodes: ['10', '11'],
-            weight: 2.0,
-            rank: 3,
-            dynamicCommunityId: 'D3'
-        },
-        {
-            source: { t: '2021Q2' as Timestamp, y: 0.925, community: 'C4' as CommunityId },
-            target: { t: '2021Q3' as Timestamp, y: 0.95, community: 'C5' as CommunityId },
-            nodes: ['10'],
-            weight: 1.0,
-            rank: 4,
-            dynamicCommunityId: 'D3'
-        },
-        {
-            source: { t: '2021Q1' as Timestamp, y: 0.9, community: 'C3' as CommunityId },
-            target: { t: '2021Q2' as Timestamp, y: 0.925, community: 'C4' as CommunityId },
-            nodes: ['12'],
-            weight: 1.0,
-            rank: 5,
-            dynamicCommunityId: 'D4'
-        }
-    ] as TransitionCurve[],
-
-    dynamicCommunities: [
-        {
-            id: 'D1',
-            timeline: [
-                { t: '2021Q1' as Timestamp, community: 'C1' as CommunityId },
-                { t: '2021Q2' as Timestamp, community: 'C1' as CommunityId },
-                { t: '2021Q3' as Timestamp, community: 'C1' as CommunityId },
-                { t: '2021Q4' as Timestamp, community: 'C1' as CommunityId }
-            ],
-            stability: 0.85,
-            color: '#1f77b4'
-        },
-        {
-            id: 'D2',
-            timeline: [
-                { t: '2021Q1' as Timestamp, community: 'C2' as CommunityId },
-                { t: '2021Q2' as Timestamp, community: 'C2' as CommunityId },
-                { t: '2021Q3' as Timestamp, community: 'C2' as CommunityId },
-                { t: '2021Q4' as Timestamp, community: 'C2' as CommunityId }
-            ],
-            stability: 0.75,
-            color: '#ff7f0e'
-        },
-        {
-            id: 'D3',
-            timeline: [
-                { t: '2021Q1' as Timestamp, community: 'C3' as CommunityId },
-                { t: '2021Q2' as Timestamp, community: 'C4' as CommunityId },
-                { t: '2021Q3' as Timestamp, community: 'C5' as CommunityId }
-            ],
-            stability: 0.6,
-            color: '#2ca02c'
-        },
-        {
-            id: 'D4',
-            timeline: [
-                { t: '2021Q1' as Timestamp, community: 'C3' as CommunityId },
-                { t: '2021Q2' as Timestamp, community: 'C4' as CommunityId }
-            ],
-            stability: 0.5,
-            color: '#d62728'
-        }
-    ] as DynamicCommunity[],
-
-    vertexStabilities: [
-        { node: '1', stability: 0.9 },
-        { node: '2', stability: 0.9 },
-        { node: '3', stability: 0.9 },
-        { node: '4', stability: 0.9 },
-        { node: '5', stability: 0.9 },
-        { node: '6', stability: 0.8 },
-        { node: '7', stability: 0.8 },
-        { node: '8', stability: 0.8 },
-        { node: '9', stability: 0.8 },
-        { node: '10', stability: 0.6 },
-        { node: '11', stability: 0.6 },
-        { node: '12', stability: 0.5 },
-        { node: '13', stability: 0.7 },
-        { node: '14', stability: 0.4 },
-        { node: '15', stability: 0.4 },
-        { node: '16', stability: 0.6 },
-        { node: '17', stability: 0.7 },
-        { node: '18', stability: 0.3 },
-        { node: '19', stability: 0.5 },
-        { node: '20', stability: 0.6 },
-        { node: '21', stability: 0.25 }
-    ] as VertexStability[]
-};
-
 export default function DynamicCommunitiesPage() {
     const {
-        setTimestamps,
-        setCommunityBlocks,
-        setTransitionCurves,
-        setDynamicCommunities,
-        setVertexStabilities
+        timestamps,
+        communityBlocks,
+        transitionCurves,
+        dynamicCommunities,
+        vertexStabilities,
+        isLoading,
+        error,
+        lastUpdated,
+        fetchData
     } = useDynamicCommunityStore();
 
-    // サンプルデータの読み込み
+    // 初回データ取得
     useEffect(() => {
-        setTimestamps(sampleData.timestamps);
-        setCommunityBlocks(sampleData.communityBlocks);
-        setTransitionCurves(sampleData.transitionCurves);
-        setDynamicCommunities(sampleData.dynamicCommunities);
-        setVertexStabilities(sampleData.vertexStabilities);
-    }, [setTimestamps, setCommunityBlocks, setTransitionCurves, setDynamicCommunities, setVertexStabilities]);
+        fetchData();
+    }, [fetchData]);
+
+    // データ統計
+    const dataStats = {
+        timestamps: timestamps.length,
+        communities: communityBlocks.length,
+        transitions: transitionCurves.length,
+        dynamicCommunities: dynamicCommunities.length,
+        nodes: vertexStabilities.length
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -300,30 +50,109 @@ export default function DynamicCommunitiesPage() {
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
                         動的コミュニティ可視化
                     </h1>
+                    <p className="text-gray-600">
+                        CSVデータに基づくコミュニティ進化の可視化
+                    </p>
                 </div>
 
-                {/* メインコンテンツ */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    {/* 左サイドバー - コントロール */}
-                    <div className="lg:col-span-1">
-                        <DynamicCommunityControls />
+                {/* ローディング状態 */}
+                {isLoading && (
+                    <div className="mb-8 bg-white rounded-lg shadow-lg p-6">
+                        <div className="flex items-center justify-center space-x-3">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <span className="text-lg text-gray-700">データを取得中...</span>
+                        </div>
                     </div>
+                )}
 
-                    {/* メインキャンバス */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-lg shadow-lg p-4">
-                            <div className="h-[600px]">
-                                <DynamicCommunityCanvas />
+                {/* メインコンテンツ */}
+                {!isLoading && !error && (
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        {/* 左サイドバー - コントロールとデータ情報 */}
+                        <div className="lg:col-span-1 space-y-6">
+                            <DynamicCommunityControls />
+
+                            {/* データ情報 */}
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <h2 className="text-lg font-semibold text-gray-800 mb-4">データ概要</h2>
+                                <div className="space-y-4">
+                                    <div>
+                                        <h3 className="font-medium text-gray-700 mb-2">時刻情報</h3>
+                                        <div className="text-sm text-gray-600">
+                                            <div>• データポイント: {dataStats.timestamps}</div>
+                                            <div>• 期間: {timestamps.length > 0 ? `${timestamps[0]} - ${timestamps[timestamps.length - 1]}` : 'N/A'}</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-medium text-gray-700 mb-2">コミュニティ情報</h3>
+                                        <div className="text-sm text-gray-600">
+                                            <div>• 総ブロック数: {dataStats.communities}</div>
+                                            <div>• 動的コミュニティ: {dataStats.dynamicCommunities}</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-medium text-gray-700 mb-2">遷移情報</h3>
+                                        <div className="text-sm text-gray-600">
+                                            <div>• 遷移曲線: {dataStats.transitions}</div>
+                                            <div>• 平均重み: {transitionCurves.length > 0 ?
+                                                (transitionCurves.reduce((sum, c) => sum + c.weight, 0) / transitionCurves.length).toFixed(2) : 'N/A'}</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-medium text-gray-700 mb-2">ノード情報</h3>
+                                        <div className="text-sm text-gray-600">
+                                            <div>• 総ノード数: {dataStats.nodes}</div>
+                                            <div>• 平均安定性: {vertexStabilities.length > 0 ?
+                                                (vertexStabilities.reduce((sum, v) => sum + v.stability, 0) / vertexStabilities.length).toFixed(3) : 'N/A'}</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-medium text-gray-700 mb-2">データソース</h3>
+                                        <div className="text-sm text-gray-600">
+                                            <div>• ノード: processed/nodes.csv</div>
+                                            <div>• エッジ: processed/edges.csv</div>
+                                            <div>• コミュニティ: processed/alluvial_nodes.csv</div>
+                                            {lastUpdated && (
+                                                <div className="mt-2 text-xs text-gray-500">
+                                                    最終更新: {lastUpdated.toLocaleString('ja-JP')}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* メインキャンバス */}
+                        <div className="lg:col-span-3">
+                            <div className="bg-white rounded-lg shadow-lg p-4">
+                                <div className="h-[800px]">
+                                    <DynamicCommunityCanvas />
+                                </div>
+                            </div>
+
+                            {/* 詳細情報パネル */}
+                            <div className="mt-6">
+                                <DynamicCommunityDetails />
                             </div>
                         </div>
                     </div>
+                )}
 
-                    {/* 右サイドバー - 詳細情報 */}
-                    <div className="lg:col-span-1">
-                        <DynamicCommunityDetails />
+                {/* データが空の場合の案内 */}
+                {!isLoading && !error && timestamps.length === 0 && (
+                    <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                        <div className="flex items-center space-x-3">
+                            <div className="text-yellow-600 text-xl">ℹ️</div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-yellow-800">データがありません</h3>
+                                <p className="text-yellow-700">
+                                    バックエンドからデータを取得できませんでした。左側のコントロールパネルから「データ取得」ボタンを押してデータを読み込んでください。
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
+                )}
             </div>
         </div>
     );

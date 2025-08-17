@@ -11,6 +11,7 @@ import {
     CommunityId,
     NodeId
 } from '../types';
+import { dynamicCommunityApi } from '../lib/dynamicCommunityApi';
 
 interface DynamicCommunityState {
     // 設定
@@ -35,6 +36,11 @@ interface DynamicCommunityState {
     isCalculating: boolean;
     calculationProgress: number;
 
+    // データ取得状態
+    isLoading: boolean;
+    error: string | null;
+    lastUpdated: Date | null;
+
     // アクション
     setConfig: (config: Partial<VizConfig>) => void;
     setTimestamps: (timestamps: Timestamp[]) => void;
@@ -52,6 +58,11 @@ interface DynamicCommunityState {
 
     setCalculating: (isCalculating: boolean) => void;
     setCalculationProgress: (progress: number) => void;
+
+    // データ取得
+    fetchData: () => Promise<void>;
+    refreshData: () => Promise<void>;
+    clearError: () => void;
 
     // 計算トリガー
     recalculateLayout: () => void;
@@ -84,6 +95,9 @@ export const useDynamicCommunityStore = create<DynamicCommunityState>((set, get)
     hoveredElement: null,
     isCalculating: false,
     calculationProgress: 0,
+    isLoading: false,
+    error: null,
+    lastUpdated: null,
 
     // アクション
     setConfig: (config) => set((state) => ({
@@ -105,6 +119,44 @@ export const useDynamicCommunityStore = create<DynamicCommunityState>((set, get)
 
     setCalculating: (isCalculating) => set({ isCalculating }),
     setCalculationProgress: (progress) => set({ calculationProgress: progress }),
+
+    // データ取得
+    fetchData: async () => {
+        const state = get();
+        if (state.isLoading) return;
+
+        set({ isLoading: true, error: null });
+
+        try {
+            const data = await dynamicCommunityApi.fetchProcessedData();
+
+            set({
+                timestamps: data.timestamps,
+                communityBlocks: data.communityBlocks,
+                transitionCurves: data.transitionCurves,
+                dynamicCommunities: data.dynamicCommunities,
+                vertexStabilities: data.vertexStabilities,
+                isLoading: false,
+                lastUpdated: new Date(),
+                error: null
+            });
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            set({
+                isLoading: false,
+                error: error instanceof Error ? error.message : 'データの取得に失敗しました'
+            });
+        }
+    },
+
+    refreshData: async () => {
+        const state = get();
+        if (state.isLoading) return;
+
+        await state.fetchData();
+    },
+
+    clearError: () => set({ error: null }),
 
     // 計算トリガー（実装は後で追加）
     recalculateLayout: () => {
