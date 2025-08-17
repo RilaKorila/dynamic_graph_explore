@@ -5,15 +5,6 @@ import { DynamicCommunityCanvas } from '../../components/DynamicCommunityCanvas'
 import { DynamicCommunityControls } from '../../components/DynamicCommunityControls';
 import { DynamicCommunityDetails } from '../../components/DynamicCommunityDetails';
 import { useDynamicCommunityStore } from '../../store/dynamicCommunityStore';
-import {
-    Timestamp,
-    CommunityId,
-    NodeId,
-    CommunityBlock,
-    TransitionCurve,
-    DynamicCommunity,
-    VertexStability
-} from '../../types';
 
 export default function DynamicCommunitiesPage() {
     const {

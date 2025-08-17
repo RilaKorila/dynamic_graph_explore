@@ -173,6 +173,61 @@ export const DynamicCommunityDetails: React.FC = () => {
                         </div>
                     )}
 
+                    {/* 遷移パターン情報 */}
+                    <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-400">
+                        <div className="flex items-center space-x-2 mb-2">
+                            <LinkIcon className="w-4 h-4 text-green-500" />
+                            <span className="text-sm font-medium text-green-700">遷移パターン</span>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                            {(() => {
+                                const outgoingTransitions = transitionCurves.filter(c =>
+                                    c.source.t === community.t && c.source.community === community.communityId
+                                );
+                                const incomingTransitions = transitionCurves.filter(c =>
+                                    c.target.t === community.t && c.target.community === community.communityId
+                                );
+
+                                if (outgoingTransitions.length > 1) {
+                                    return (
+                                        <div className="text-green-800">
+                                            <span className="font-medium">🟡 分裂パターン:</span>
+                                            {outgoingTransitions.length}個のコミュニティに分裂
+                                        </div>
+                                    );
+                                } else if (incomingTransitions.length > 1) {
+                                    return (
+                                        <div className="text-green-800">
+                                            <span className="font-medium">🟣 統合パターン:</span>
+                                            {incomingTransitions.length}個のコミュニティから統合
+                                        </div>
+                                    );
+                                } else if (outgoingTransitions.length === 1 && incomingTransitions.length === 1) {
+                                    return (
+                                        <div className="text-green-800">
+                                            <span className="font-medium">🟢 維持パターン:</span>
+                                            1対1の遷移
+                                        </div>
+                                    );
+                                } else if (outgoingTransitions.length === 0 && incomingTransitions.length === 0) {
+                                    return (
+                                        <div className="text-green-800">
+                                            <span className="font-medium">🔴 孤立:</span>
+                                            遷移なし
+                                        </div>
+                                    );
+                                } else {
+                                    return (
+                                        <div className="text-green-800">
+                                            <span className="font-medium">⚪ その他:</span>
+                                            複雑な遷移パターン
+                                        </div>
+                                    );
+                                }
+                            })()}
+                        </div>
+                    </div>
+
                     {/* コミュニティの特徴 */}
                     <div className="bg-gray-50 rounded-lg p-3">
                         <div className="text-sm text-gray-700">

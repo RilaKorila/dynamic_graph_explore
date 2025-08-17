@@ -42,6 +42,7 @@ export class DynamicCommunityDataProcessor {
     private nodes: CsvNode[] = [];
     private edges: CsvEdge[] = [];
     private alluvialNodes: CsvAlluvialNode[] = [];
+    private JACCARD_THRESHOLD: number = 0.1;
 
     constructor(nodes: CsvNode[], edges: CsvEdge[], alluvialNodes: CsvAlluvialNode[]) {
         this.nodes = nodes;
@@ -113,17 +114,30 @@ export class DynamicCommunityDataProcessor {
 
             // 現在時刻のコミュニティ
             const currentCommunities = this.alluvialNodes.filter(n => n.time === currentTime);
-            const nextCommunities = this.alluvialNodes.filter(n => n.time === nextTime);
 
             // コミュニティ間の遷移を計算
             currentCommunities.forEach(currentComm => {
-                const nextComm = this.findBestMatchingCommunity(
+                const matchingCommunities = this.findAllMatchingCommunities(
                     currentComm.community_id,
                     currentTime,
                     nextTime
                 );
 
-                if (nextComm) {
+                // 分裂/統合パターンの検知
+                if (matchingCommunities.length > 1) {
+                    console.log(`🟡 分裂検知: ${currentComm.community_id} → ${matchingCommunities.map(c => `${c.community_id}(${c.similarity.toFixed(2)})`).join(', ')}`);
+                    // それぞれのcommunityの類似度を表示
+                    for (const nextComm of matchingCommunities) {
+                        console.log(`=>  ${currentComm.community_id} → ${nextComm.community_id} (類似度: ${nextComm.similarity.toFixed(2)})`);
+                    }
+                } else if (matchingCommunities.length === 1) {
+                    console.log(`🟢 1対1: ${currentComm.community_id} → ${matchingCommunities[0].community_id} (類似度: ${matchingCommunities[0].similarity.toFixed(2)})`);
+                } else {
+                    console.log(`🔴 消滅: ${currentComm.community_id} → なし`);
+                }
+
+                // 複数のマッチングコミュニティに対して遷移曲線を作成
+                matchingCommunities.forEach(nextComm => {
                     const sourceY = this.getCommunityYPosition(currentTime, currentComm.community_id);
                     const targetY = this.getCommunityYPosition(nextTime, nextComm.community_id);
 
@@ -131,16 +145,22 @@ export class DynamicCommunityDataProcessor {
                         const nodes = this.getTransitionNodes(currentComm.community_id, nextComm.community_id);
                         const weight = nodes.length;
 
+                        // 分裂した場合の重み正規化
+                        let normalizedWeight = weight;
+                        if (matchingCommunities.length > 1) {
+                            normalizedWeight = weight / matchingCommunities.length;
+                        }
+
                         curves.push({
                             source: { t: currentTime, y: sourceY, community: currentComm.community_id },
                             target: { t: nextTime, y: targetY, community: nextComm.community_id },
                             nodes,
-                            weight,
-                            rank: this.calculateTransitionRank(weight, nodes.length),
+                            weight: normalizedWeight,
+                            rank: this.calculateTransitionRank(normalizedWeight, nodes.length),
                             dynamicCommunityId: this.generateDynamicCommunityId(currentComm.community_id, nextComm.community_id)
                         });
                     }
-                }
+                });
             });
         }
 
@@ -242,24 +262,25 @@ export class DynamicCommunityDataProcessor {
         return union.size > 0 ? intersection.size / union.size : 0;
     }
 
-    private findBestMatchingCommunity(currentCommunityId: string, currentTime: string, nextTime: string): CsvAlluvialNode | null {
+    private findAllMatchingCommunities(currentCommunityId: string, currentTime: string, nextTime: string): Array<CsvAlluvialNode & { similarity: number }> {
         const currentNodes = this.nodes.filter(n => n.time === currentTime && n.cluster === currentCommunityId);
         const nextCommunities = this.alluvialNodes.filter(n => n.time === nextTime);
 
-        let bestMatch: CsvAlluvialNode | null = null;
-        let bestSimilarity = 0;
+        const matchingCommunities: Array<CsvAlluvialNode & { similarity: number }> = [];
 
         nextCommunities.forEach(nextComm => {
             const nextNodes = this.nodes.filter(n => n.time === nextTime && n.cluster === nextComm.community_id);
             const similarity = this.calculateJaccardSimilarity(currentNodes, nextNodes);
 
-            if (similarity > bestSimilarity && similarity > 0.3) { // 閾値0.3
-                bestSimilarity = similarity;
-                bestMatch = nextComm;
+            if (similarity > this.JACCARD_THRESHOLD) { // 閾値を超えるすべてのコミュニティを収集
+                matchingCommunities.push({
+                    ...nextComm,
+                    similarity
+                });
             }
         });
 
-        return bestMatch;
+        return matchingCommunities;
     }
 
     private getCommunityYPosition(timestamp: string, communityId: string): number | null {

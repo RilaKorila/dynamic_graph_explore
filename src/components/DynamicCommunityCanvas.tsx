@@ -169,6 +169,19 @@ export const DynamicCommunityCanvas: React.FC = () => {
             // 線の太さ（重みに基づく）
             const strokeWidth = Math.max(1, Math.sqrt(curve.weight) * 2);
 
+            // 分裂パターンの検知（同じソースから複数の遷移がある場合）
+            const isSplitPattern = transitionCurves.filter(c =>
+                c.source.t === curve.source.t &&
+                c.source.community === curve.source.community
+            ).length > 1;
+
+            // 分裂パターンの場合は線を点線にする
+            if (isSplitPattern) {
+                ctx.setLineDash([5, 5]);
+            } else {
+                ctx.setLineDash([]);
+            }
+
             // ハロー効果
             ctx.strokeStyle = 'rgba(0,0,0,0.1)';
             ctx.lineWidth = strokeWidth + 4;
@@ -182,6 +195,9 @@ export const DynamicCommunityCanvas: React.FC = () => {
             ctx.beginPath();
             drawBezierCurve(ctx, x1, y1, x2, y2);
             ctx.stroke();
+
+            // 線のスタイルをリセット
+            ctx.setLineDash([]);
 
             // ホバー効果
             if (hoveredElement?.type === 'curve' && hoveredElement.id === `${curve.source.t}-${curve.source.community}-${curve.target.t}-${curve.target.community}`) {
