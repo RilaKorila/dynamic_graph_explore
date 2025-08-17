@@ -261,3 +261,8 @@ onBrush(([t0, t1]) => setBrush([t0, t1]));
 onCommunityClick((cid) => toggleCommunity(cid));
 ```
 
+## 引用
+
+Alluvial Viewsの可視化アルゴリズムは以下の論文の内容を参照
+
+Vehlow, Corinna, et al. "Visualizing the evolution of communities in dynamic graphs." Computer graphics forum. Vol. 34. No. 1. 2015.
