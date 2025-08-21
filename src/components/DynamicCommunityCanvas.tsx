@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { useDynamicCommunityStore } from '../store/dynamicCommunityStore';
+import { useVizStore } from '../store/vizStore';
 import { Timestamp } from '../types';
 
 interface CanvasDimensions {
@@ -28,8 +29,26 @@ export const DynamicCommunityCanvas: React.FC = () => {
         selectedNodeId,
         selectedCommunityId,
         hoveredElement,
-        setHoveredElement
+        setHoveredElement,
+        fetchData,
+        isLoading,
+        error
     } = useDynamicCommunityStore();
+
+    // フィルタリング用のストア
+    const {
+        selectedCommunities,
+        toggleCommunity,
+        timeRange,
+        currentTime
+    } = useVizStore();
+
+    // データの取得
+    useEffect(() => {
+        if (timestamps.length === 0) {
+            fetchData();
+        }
+    }, [timestamps.length, fetchData]);
 
     // キャンバスサイズの調整
     useEffect(() => {
@@ -48,6 +67,33 @@ export const DynamicCommunityCanvas: React.FC = () => {
         window.addEventListener('resize', updateDimensions);
         return () => window.removeEventListener('resize', updateDimensions);
     }, []);
+
+    // フィルタリングされたデータの計算
+    const filteredData = useMemo(() => {
+        if (timestamps.length === 0) return { blocks: [], curves: [] };
+
+        // 選択されたコミュニティでフィルタリング
+        const filteredBlocks = selectedCommunities.size === 0
+            ? communityBlocks
+            : communityBlocks.filter(block => selectedCommunities.has(block.communityId));
+
+        // 時間範囲でフィルタリング
+        const filteredBlocksByTime = timeRange
+            ? filteredBlocks.filter(block => {
+                return block.t >= timeRange[0] && block.t <= timeRange[1];
+            })
+            : filteredBlocks;
+
+        // 遷移曲線も同様にフィルタリング
+        const filteredCurves = selectedCommunities.size === 0
+            ? transitionCurves
+            : transitionCurves.filter(curve =>
+                selectedCommunities.has(curve.source.community) ||
+                selectedCommunities.has(curve.target.community)
+            );
+
+        return { blocks: filteredBlocksByTime, curves: filteredCurves };
+    }, [communityBlocks, transitionCurves, selectedCommunities, timeRange, timestamps]);
 
     // D3スケールの設定
     const scales = useCallback(() => {
@@ -68,12 +114,12 @@ export const DynamicCommunityCanvas: React.FC = () => {
     }, [timestamps, dimensions]);
 
     // コミュニティブロックの描画
-    const drawCommunityBlocks = useCallback((ctx: CanvasRenderingContext2D, scales: any) => {
+    const drawCommunityBlocks = useCallback((ctx: CanvasRenderingContext2D, scales: any, blocks: any[] = communityBlocks) => {
         if (!scales) return;
 
         ctx.save();
 
-        communityBlocks.forEach(block => {
+        blocks.forEach(block => {
             const x = scales.xScale(block.t);
             if (x === undefined) return;
 
@@ -123,13 +169,13 @@ export const DynamicCommunityCanvas: React.FC = () => {
     }, [communityBlocks, selectedCommunityId, dimensions]);
 
     // 遷移曲線の描画
-    const drawTransitionCurves = useCallback((ctx: CanvasRenderingContext2D, scales: any) => {
+    const drawTransitionCurves = useCallback((ctx: CanvasRenderingContext2D, scales: any, curves: any[] = transitionCurves) => {
         if (!scales) return;
 
         ctx.save();
 
         // 描画順序でソート（rankが高いものを後で描画）
-        const sortedCurves = [...transitionCurves].sort((a, b) => a.rank - b.rank);
+        const sortedCurves = [...curves].sort((a, b) => a.rank - b.rank);
 
         sortedCurves.forEach(curve => {
             const x1 = scales.xScale(curve.source.t);
@@ -154,7 +200,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
                     break;
                 case 'vStab':
                     // 頂点安定性に基づく色（緑系）
-                    const avgStability = curve.nodes.reduce((sum, nodeId) => {
+                    const avgStability = curve.nodes.reduce((sum: number, nodeId: string) => {
                         // TODO: 実際の頂点安定性データを使用
                         return sum + 0.5;
                     }, 0) / curve.nodes.length;
@@ -361,15 +407,13 @@ export const DynamicCommunityCanvas: React.FC = () => {
         // 軸の描画
         drawAxes(ctx, scalesData);
 
-        // コミュニティブロックの描画
-        drawCommunityBlocks(ctx, scalesData);
-
-        // 遷移曲線の描画
-        drawTransitionCurves(ctx, scalesData);
+        // フィルタリングされたデータで描画
+        drawCommunityBlocks(ctx, scalesData, filteredData.blocks);
+        drawTransitionCurves(ctx, scalesData, filteredData.curves);
 
         // 凡例の描画
         drawLegend(ctx);
-    }, [dimensions, scales, drawAxes, drawCommunityBlocks, drawTransitionCurves, drawLegend]);
+    }, [dimensions, scales, drawAxes, drawCommunityBlocks, drawTransitionCurves, drawLegend, filteredData]);
 
     // 描画の実行
     useEffect(() => {
@@ -434,10 +478,37 @@ export const DynamicCommunityCanvas: React.FC = () => {
         });
 
         if (clickedBlock) {
-            // TODO: 選択状態の更新
-            console.log('Clicked community:', clickedBlock.communityId);
+            // コミュニティの選択状態を切り替え
+            toggleCommunity(clickedBlock.communityId);
         }
-    }, [communityBlocks, scales]);
+    }, [communityBlocks, scales, toggleCommunity]);
+
+    // ローディング状態の表示
+    if (isLoading) {
+        return (
+            <div className="w-full h-full flex items-center justify-center">
+                <div className="text-gray-500">データを読み込み中...</div>
+            </div>
+        );
+    }
+
+    // エラー状態の表示
+    if (error) {
+        return (
+            <div className="w-full h-full flex items-center justify-center">
+                <div className="text-red-500">エラー: {error}</div>
+            </div>
+        );
+    }
+
+    // データがない場合の表示
+    if (timestamps.length === 0) {
+        return (
+            <div className="w-full h-full flex items-center justify-center">
+                <div className="text-gray-500">データがありません</div>
+            </div>
+        );
+    }
 
     return (
         <div ref={containerRef} className="w-full h-full">
