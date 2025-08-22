@@ -487,7 +487,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
     if (isLoading) {
         return (
             <div className="w-full h-full flex items-center justify-center">
-                <div className="text-gray-500">データを読み込み中...</div>
+                <div className="text-gray-500">Loading Views...</div>
             </div>
         );
     }
