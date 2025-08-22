@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { useDynamicCommunityStore } from '../store/dynamicCommunityStore';
 import { useVizStore } from '../store/vizStore';
 import { Timestamp } from '../types';
+import { getCommunityColor } from '../lib/colors';
 
 interface CanvasDimensions {
     width: number;
@@ -127,16 +128,13 @@ export const DynamicCommunityCanvas: React.FC = () => {
             const y1 = scales.yScale(block.y1);
             const blockHeight = y1 - y0;
 
-            // 背景色（密度に基づく）
-            const densityColor = d3.scaleSequential()
-                .domain([0, 1])
-                .interpolator(d3.interpolateRgb.gamma(2.2)("#f0f0f0", "#404040"));
-
-            ctx.fillStyle = densityColor(block.density);
+            // 背景色（コミュニティIDベース、Graphと同じ色）
+            const communityColor = getCommunityColor(block.communityId);
+            ctx.fillStyle = communityColor;
             ctx.fillRect(x - 25, y0, 50, blockHeight);
 
             // 境界線
-            ctx.strokeStyle = selectedCommunityId === block.communityId ? '#3b82f6' : '#d1d5db';
+            ctx.strokeStyle = selectedCommunityId === block.communityId ? '#1f2937' : '#d1d5db';
             ctx.lineWidth = selectedCommunityId === block.communityId ? 3 : 1;
             ctx.strokeRect(x - 25, y0, 50, blockHeight);
 
@@ -154,14 +152,14 @@ export const DynamicCommunityCanvas: React.FC = () => {
             // 密度バー
             ctx.fillStyle = '#d1d5db';
             ctx.fillRect(x - densityBarWidth / 2, densityBarY, densityBarWidth, densityBarHeight);
-            ctx.fillStyle = '#3b82f6';
+            ctx.fillStyle = communityColor;
             ctx.fillRect(x - densityBarWidth / 2, densityBarY, densityBarWidth * block.density, densityBarHeight);
 
             // 安定性バー
             const stabilityBarY = y1 - 8;
             ctx.fillStyle = '#d1d5db';
             ctx.fillRect(x - densityBarWidth / 2, stabilityBarY, densityBarWidth, densityBarHeight);
-            ctx.fillStyle = '#10b981';
+            ctx.fillStyle = communityColor;
             ctx.fillRect(x - densityBarWidth / 2, stabilityBarY, densityBarWidth * block.stability, densityBarHeight);
         });
 
@@ -354,14 +352,14 @@ export const DynamicCommunityCanvas: React.FC = () => {
         ctx.fillText('凡例', legendX, legendY);
 
         // 密度バー
-        ctx.fillStyle = '#3b82f6';
+        ctx.fillStyle = '#6b7280';
         ctx.fillRect(legendX, legendY + 15, 20, 8);
         ctx.fillStyle = '#6b7280';
         ctx.font = '10px sans-serif';
         ctx.fillText('密度', legendX + 25, legendY + 22);
 
         // 安定性バー
-        ctx.fillStyle = '#10b981';
+        ctx.fillStyle = '#6b7280';
         ctx.fillRect(legendX, legendY + 30, 20, 8);
         ctx.fillStyle = '#6b7280';
         ctx.fillText('安定性', legendX + 25, legendY + 37);
@@ -377,7 +375,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
         ctx.fillText('遷移', legendX + 25, legendY + 50);
 
         // 選択状態
-        ctx.strokeStyle = '#3b82f6';
+        ctx.strokeStyle = '#1f2937';
         ctx.lineWidth = 3;
         ctx.strokeRect(legendX, legendY + 60, 20, 12);
         ctx.fillStyle = '#6b7280';
