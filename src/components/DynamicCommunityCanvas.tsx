@@ -187,9 +187,11 @@ export const DynamicCommunityCanvas: React.FC = () => {
             let color: string;
             switch (config.colorMode) {
                 case 'dynamic':
+                    console.log("dynamic")
                     color = d3.schemeCategory10[parseInt(curve.dynamicCommunityId.slice(1)) % 10];
                     break;
                 case 'cStab':
+                    console.log("cStab")
                     // コミュニティ安定性に基づく色（青系）
                     const stability = curve.weight / Math.max(...transitionCurves.map(c => c.weight));
                     color = d3.scaleSequential()
@@ -197,6 +199,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
                         .interpolator(d3.interpolateBlues)(stability);
                     break;
                 case 'vStab':
+                    console.log("vStab")
                     // 頂点安定性に基づく色（緑系）
                     const avgStability = curve.nodes.reduce((sum: number, nodeId: string) => {
                         // TODO: 実際の頂点安定性データを使用
@@ -226,7 +229,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
                 ctx.setLineDash([]);
             }
 
-            // ハロー効果
+            // ハロー効果 (edgeの交差を見やすくする手法・論文に記述あり)
             ctx.strokeStyle = 'rgba(0,0,0,0.1)';
             ctx.lineWidth = strokeWidth + 4;
             ctx.beginPath();
@@ -234,37 +237,11 @@ export const DynamicCommunityCanvas: React.FC = () => {
             ctx.stroke();
 
             // メインの線
-            ctx.strokeStyle = color;
+            ctx.strokeStyle = "#a9a9a9";
             ctx.lineWidth = strokeWidth;
             ctx.beginPath();
             drawBezierCurve(ctx, x1, y1, x2, y2);
             ctx.stroke();
-
-            // 線のスタイルをリセット
-            ctx.setLineDash([]);
-
-            // ホバー効果
-            if (hoveredElement?.type === 'curve' && hoveredElement.id === `${curve.source.t}-${curve.source.community}-${curve.target.t}-${curve.target.community}`) {
-                ctx.strokeStyle = '#ef4444';
-                ctx.lineWidth = strokeWidth + 2;
-                ctx.beginPath();
-                drawBezierCurve(ctx, x1, y1, x2, y2);
-                ctx.stroke();
-            }
-
-            // 遷移の重みラベル
-            const midX = (x1 + x2) / 2;
-            const midY = (y1 + y2) / 2;
-
-            // 背景
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.fillRect(midX - 15, midY - 8, 30, 16);
-
-            // テキスト
-            ctx.fillStyle = color;
-            ctx.font = 'bold 10px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(curve.weight.toString(), midX, midY + 3);
         });
 
         ctx.restore();
@@ -406,8 +383,8 @@ export const DynamicCommunityCanvas: React.FC = () => {
         drawAxes(ctx, scalesData);
 
         // フィルタリングされたデータで描画
-        drawCommunityBlocks(ctx, scalesData, filteredData.blocks);
         drawTransitionCurves(ctx, scalesData, filteredData.curves);
+        drawCommunityBlocks(ctx, scalesData, filteredData.blocks);
 
         // 凡例の描画
         drawLegend(ctx);
