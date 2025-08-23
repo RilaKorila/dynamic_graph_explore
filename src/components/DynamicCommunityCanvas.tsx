@@ -27,7 +27,6 @@ export const DynamicCommunityCanvas: React.FC = () => {
         communityBlocks,
         transitionCurves,
         config,
-        selectedNodeId,
         selectedCommunityId,
         hoveredElement,
         setHoveredElement,
@@ -145,22 +144,22 @@ export const DynamicCommunityCanvas: React.FC = () => {
             ctx.fillText(block.label, x, y0 - 8);
 
             // 密度と安定性のインジケーター
-            const densityBarWidth = 40;
-            const densityBarHeight = 4;
-            const densityBarY = y1 - 15;
+            // const densityBarWidth = 40;
+            // const densityBarHeight = 4;
+            // const densityBarY = y1 - 15;
 
-            // 密度バー
-            ctx.fillStyle = '#d1d5db';
-            ctx.fillRect(x - densityBarWidth / 2, densityBarY, densityBarWidth, densityBarHeight);
-            ctx.fillStyle = communityColor;
-            ctx.fillRect(x - densityBarWidth / 2, densityBarY, densityBarWidth * block.density, densityBarHeight);
+            // // 密度バー
+            // ctx.fillStyle = '#d1d5db';
+            // ctx.fillRect(x - densityBarWidth / 2, densityBarY, densityBarWidth, densityBarHeight);
+            // ctx.fillStyle = communityColor;
+            // ctx.fillRect(x - densityBarWidth / 2, densityBarY, densityBarWidth * block.density, densityBarHeight);
 
-            // 安定性バー
-            const stabilityBarY = y1 - 8;
-            ctx.fillStyle = '#d1d5db';
-            ctx.fillRect(x - densityBarWidth / 2, stabilityBarY, densityBarWidth, densityBarHeight);
-            ctx.fillStyle = communityColor;
-            ctx.fillRect(x - densityBarWidth / 2, stabilityBarY, densityBarWidth * block.stability, densityBarHeight);
+            // // 安定性バー
+            // const stabilityBarY = y1 - 8;
+            // ctx.fillStyle = '#d1d5db';
+            // ctx.fillRect(x - densityBarWidth / 2, stabilityBarY, densityBarWidth, densityBarHeight);
+            // ctx.fillStyle = communityColor;
+            // ctx.fillRect(x - densityBarWidth / 2, stabilityBarY, densityBarWidth * block.stability, densityBarHeight);
         });
 
         ctx.restore();
@@ -184,34 +183,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
             const y2 = scales.yScale(curve.target.y);
 
             // 色の決定
-            let color: string;
-            switch (config.colorMode) {
-                case 'dynamic':
-                    console.log("dynamic")
-                    color = d3.schemeCategory10[parseInt(curve.dynamicCommunityId.slice(1)) % 10];
-                    break;
-                case 'cStab':
-                    console.log("cStab")
-                    // コミュニティ安定性に基づく色（青系）
-                    const stability = curve.weight / Math.max(...transitionCurves.map(c => c.weight));
-                    color = d3.scaleSequential()
-                        .domain([0, 1])
-                        .interpolator(d3.interpolateBlues)(stability);
-                    break;
-                case 'vStab':
-                    console.log("vStab")
-                    // 頂点安定性に基づく色（緑系）
-                    const avgStability = curve.nodes.reduce((sum: number, nodeId: string) => {
-                        // TODO: 実際の頂点安定性データを使用
-                        return sum + 0.5;
-                    }, 0) / curve.nodes.length;
-                    color = d3.scaleSequential()
-                        .domain([0, 1])
-                        .interpolator(d3.interpolateGreens)(avgStability);
-                    break;
-                default:
-                    color = '#6b7280';
-            }
+            const color = d3.schemeCategory10[parseInt(curve.dynamicCommunityId.slice(1)) % 10];
 
             // 線の太さ（重みに基づく）
             const strokeWidth = Math.max(1, Math.sqrt(curve.weight) * 2);
