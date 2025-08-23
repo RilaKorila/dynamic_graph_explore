@@ -141,7 +141,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
             ctx.fillStyle = '#374151';
             ctx.font = 'bold 14px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(block.label, x, y0 - 8);
+            ctx.fillText(block.label, x, (y0 + y1) / 2);
 
             // 密度と安定性のインジケーター
             // const densityBarWidth = 40;
@@ -181,10 +181,6 @@ export const DynamicCommunityCanvas: React.FC = () => {
 
             const y1 = scales.yScale(curve.source.y);
             const y2 = scales.yScale(curve.target.y);
-
-            // 色の決定
-            const color = d3.schemeCategory10[parseInt(curve.dynamicCommunityId.slice(1)) % 10];
-
             // 線の太さ（重みに基づく）
             const strokeWidth = Math.max(1, Math.sqrt(curve.weight) * 2);
 
