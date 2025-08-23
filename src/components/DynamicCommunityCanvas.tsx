@@ -292,59 +292,6 @@ export const DynamicCommunityCanvas: React.FC = () => {
         ctx.restore();
     }, [timestamps, dimensions]);
 
-    // 凡例の描画
-    const drawLegend = useCallback((ctx: CanvasRenderingContext2D) => {
-        ctx.save();
-
-        const legendX = dimensions.width - 150;
-        const legendY = 50;
-
-        // 凡例の背景
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-        ctx.fillRect(legendX - 10, legendY - 10, 140, 120);
-        ctx.strokeStyle = '#d1d5db';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(legendX - 10, legendY - 10, 140, 120);
-
-        // 凡例タイトル
-        ctx.fillStyle = '#374151';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('凡例', legendX, legendY);
-
-        // 密度バー
-        ctx.fillStyle = '#6b7280';
-        ctx.fillRect(legendX, legendY + 15, 20, 8);
-        ctx.fillStyle = '#6b7280';
-        ctx.font = '10px sans-serif';
-        ctx.fillText('密度', legendX + 25, legendY + 22);
-
-        // 安定性バー
-        ctx.fillStyle = '#6b7280';
-        ctx.fillRect(legendX, legendY + 30, 20, 8);
-        ctx.fillStyle = '#6b7280';
-        ctx.fillText('安定性', legendX + 25, legendY + 37);
-
-        // 遷移曲線
-        ctx.strokeStyle = '#6b7280';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(legendX, legendY + 45);
-        ctx.lineTo(legendX + 20, legendY + 45);
-        ctx.stroke();
-        ctx.fillStyle = '#6b7280';
-        ctx.fillText('遷移', legendX + 25, legendY + 50);
-
-        // 選択状態
-        ctx.strokeStyle = '#1f2937';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(legendX, legendY + 60, 20, 12);
-        ctx.fillStyle = '#6b7280';
-        ctx.fillText('選択', legendX + 25, legendY + 68);
-
-        ctx.restore();
-    }, [dimensions]);
-
     // メインの描画関数
     const draw = useCallback(() => {
         const canvas = canvasRef.current;
@@ -369,10 +316,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
         // フィルタリングされたデータで描画
         drawTransitionCurves(ctx, scalesData, filteredData.curves);
         drawCommunityBlocks(ctx, scalesData, filteredData.blocks);
-
-        // 凡例の描画
-        drawLegend(ctx);
-    }, [dimensions, scales, drawAxes, drawCommunityBlocks, drawTransitionCurves, drawLegend, filteredData]);
+    }, [dimensions, scales, drawAxes, drawCommunityBlocks, drawTransitionCurves, filteredData]);
 
     // 描画の実行
     useEffect(() => {
