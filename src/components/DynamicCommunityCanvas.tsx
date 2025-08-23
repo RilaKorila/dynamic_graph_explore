@@ -179,8 +179,24 @@ export const DynamicCommunityCanvas: React.FC = () => {
             const x2 = scales.xScale(curve.target.t);
             if (x1 === undefined || x2 === undefined) return;
 
-            const y1 = scales.yScale(curve.source.y);
-            const y2 = scales.yScale(curve.target.y);
+            // CommunityBlockの位置からY座標を計算
+            const sourceBlock = communityBlocks.find(block =>
+                block.t === curve.source.t &&
+                block.communityId === curve.source.community
+            );
+            const targetBlock = communityBlocks.find(block =>
+                block.t === curve.target.t &&
+                block.communityId === curve.target.community
+            );
+
+            if (!sourceBlock || !targetBlock) {
+                console.warn('対応するCommunityBlockが見つかりません:', curve);
+                return;
+            }
+
+            // ブロックの中心Y座標を使用
+            const y1 = scales.yScale((sourceBlock.y0 + sourceBlock.y1) / 2);
+            const y2 = scales.yScale((targetBlock.y0 + targetBlock.y1) / 2);
             // 線の太さ（重みに基づく）
             const strokeWidth = Math.max(1, Math.sqrt(curve.weight) * 2);
 
@@ -213,7 +229,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
         });
 
         ctx.restore();
-    }, [transitionCurves, config.colorMode, hoveredElement, dimensions]);
+    }, [transitionCurves, communityBlocks, config.colorMode, hoveredElement, dimensions]);
 
     // ベジェ曲線の描画
     const drawBezierCurve = useCallback((ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) => {

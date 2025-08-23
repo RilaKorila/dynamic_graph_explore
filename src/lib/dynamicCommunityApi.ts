@@ -6,6 +6,7 @@ import {
     DynamicCommunity,
     VertexStability,
 } from '../types';
+import { CommunityOrderingOptimizer } from './communityOrderingOptimizer';
 
 // CSVデータの型定義
 interface CsvNode {
@@ -60,9 +61,12 @@ export class DynamicCommunityDataProcessor {
         return Array.from(times).sort();
     }
 
-    // コミュニティブロックを生成
+    // コミュニティブロックを生成（最適化アルゴリズム適用）
     generateCommunityBlocks(): CommunityBlock[] {
-        const blocks: CommunityBlock[] = [];
+        console.log('🏗️ CommunityBlock生成開始');
+
+        // 初期ブロックを生成
+        const initialBlocks: CommunityBlock[] = [];
         const timestamps = this.getTimestamps();
 
         timestamps.forEach(timestamp => {
@@ -75,7 +79,7 @@ export class DynamicCommunityDataProcessor {
                     .filter(n => n.time === timestamp && n.cluster === community.community_id)
                     .map(n => n.node_id);
 
-                // Y座標の計算（コミュニティごとに配置）
+                // 初期Y座標の計算（コミュニティごとに配置）
                 const totalCommunities = communitiesInTime.length;
                 const y0 = commIndex / totalCommunities;
                 const y1 = (commIndex + 1) / totalCommunities;
@@ -95,17 +99,36 @@ export class DynamicCommunityDataProcessor {
                     label: community.label
                 };
 
-                blocks.push(block);
+                initialBlocks.push(block);
             });
         });
 
-        return blocks;
+        // 遷移曲線を生成（最適化に必要）
+        const curves = this.generateTransitionCurves(initialBlocks);
+
+        // コミュニティ並び替え最適化を実行
+        try {
+            const optimizer = new CommunityOrderingOptimizer(initialBlocks, curves);
+            const result = optimizer.optimizeOrdering();
+
+            // 最適化された順序をブロックに適用
+            const optimizedBlocks = optimizer.applyOrderingToBlocks(result.commOrder);
+
+            return optimizedBlocks;
+        } catch (error) {
+            console.error('❌ 最適化に失敗しました:', error);
+            console.log('⚠️ 初期ブロックを返します');
+            return initialBlocks;
+        }
     }
 
-    // 遷移曲線を生成
-    generateTransitionCurves(): TransitionCurve[] {
+    // 遷移曲線を生成（最適化されたブロック位置を使用）
+    generateTransitionCurves(optimizedBlocks?: CommunityBlock[]): TransitionCurve[] {
         const curves: TransitionCurve[] = [];
         const timestamps = this.getTimestamps();
+
+        // 最適化されたブロックがある場合はそれを使用、ない場合は初期ブロックを生成
+        const blocksToUse = optimizedBlocks || this.generateInitialBlocks();
 
         // 隣接時刻間の遷移を計算
         for (let i = 0; i < timestamps.length - 1; i++) {
@@ -138,10 +161,11 @@ export class DynamicCommunityDataProcessor {
 
                 // 複数のマッチングコミュニティに対して遷移曲線を作成
                 matchingCommunities.forEach(nextComm => {
-                    const sourceY = this.getCommunityYPosition(currentTime, currentComm.community_id);
-                    const targetY = this.getCommunityYPosition(nextTime, nextComm.community_id);
+                    // 最適化されたブロックの位置を使用
+                    const sourceBlock = blocksToUse.find((b: CommunityBlock) => b.t === currentTime && b.communityId === currentComm.community_id);
+                    const targetBlock = blocksToUse.find((b: CommunityBlock) => b.t === nextTime && b.communityId === nextComm.community_id);
 
-                    if (sourceY !== null && targetY !== null) {
+                    if (sourceBlock && targetBlock) {
                         const nodes = this.getTransitionNodes(currentComm.community_id, nextComm.community_id);
                         const weight = nodes.length;
 
@@ -150,6 +174,10 @@ export class DynamicCommunityDataProcessor {
                         if (matchingCommunities.length > 1) {
                             normalizedWeight = weight / matchingCommunities.length;
                         }
+
+                        // ブロックの中心Y座標を使用
+                        const sourceY = (sourceBlock.y0 + sourceBlock.y1) / 2;
+                        const targetY = (targetBlock.y0 + targetBlock.y1) / 2;
 
                         curves.push({
                             source: { t: currentTime, y: sourceY, community: currentComm.community_id },
@@ -199,6 +227,48 @@ export class DynamicCommunityDataProcessor {
         });
 
         return Array.from(dynamicCommunities.values());
+    }
+
+    // 初期ブロックを生成（最適化前）
+    private generateInitialBlocks(): CommunityBlock[] {
+        const blocks: CommunityBlock[] = [];
+        const timestamps = this.getTimestamps();
+
+        timestamps.forEach(timestamp => {
+            // その時刻のコミュニティを取得
+            const communitiesInTime = this.alluvialNodes.filter(n => n.time === timestamp);
+
+            // 各コミュニティのノードを取得
+            communitiesInTime.forEach((community, commIndex) => {
+                const communityNodes = this.nodes
+                    .filter(n => n.time === timestamp && n.cluster === community.community_id)
+                    .map(n => n.node_id);
+
+                // 初期Y座標の計算（コミュニティごとに配置）
+                const totalCommunities = communitiesInTime.length;
+                const y0 = commIndex / totalCommunities;
+                const y1 = (commIndex + 1) / totalCommunities;
+
+                // 密度と安定性の計算
+                const density = this.calculateDensity(timestamp, community.community_id);
+                const stability = this.calculateStability(timestamp, community.community_id);
+
+                const block = {
+                    t: timestamp,
+                    communityId: community.community_id,
+                    y0,
+                    y1,
+                    nodes: communityNodes,
+                    density,
+                    stability,
+                    label: community.label
+                };
+
+                blocks.push(block);
+            });
+        });
+
+        return blocks;
     }
 
     // 頂点安定性を計算
