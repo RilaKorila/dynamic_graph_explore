@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useVizStore } from '@/store/vizStore'
+import { useDynamicCommunityStore } from '@/store/dynamicCommunityStore'
 import { fetchAlluvialNodes } from '@/lib/api'
 import { getCommunityColor } from '@/lib/colors'
 import { CommunityInfo } from '@/types/index'
 
 export default function Legend() {
     const { selectedCommunities, toggleCommunity } = useVizStore()
+    const { timestamps } = useDynamicCommunityStore()
     const [communities, setCommunities] = useState<CommunityInfo[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -48,8 +50,8 @@ export default function Legend() {
         return acc
     }, {} as Record<string, CommunityInfo[]>)
 
-    // timestampの順序を定義
-    const timestampOrder = ['timestamp1', 'timestamp2']
+    // timestampの順序を定義（storeから取得したtimestampsを使用）
+    const timestampOrder = timestamps
 
     if (loading) {
         return (

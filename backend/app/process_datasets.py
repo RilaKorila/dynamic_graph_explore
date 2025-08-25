@@ -2,26 +2,28 @@ import os
 import pandas as pd
 from app.dynamic_graph_parser import GraphParser
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-data_dir = os.path.join(current_dir, "..", "data")
-
-
-DATASET_NAME = "Cit-HepPh"
+# DATASET_NAME = "Cit-HepPh"
 # DATASET_NAME="facebook"
 # DATASET_NAME="timesmoothnessSample"
+DATASET_NAME = "NBAF_coauthors"
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(current_dir, "..", "data", DATASET_NAME)
+
+timestamps = [str(i) for i in range(1998, 2014)]
 
 
 def process_datasets():
     print("Processing datasets...")
 
-    timestamps = [1, 2]
-
-    for i, time in enumerate(timestamps):
+    for i, timestamp in enumerate(timestamps):
         gen_number = 3
         layout_number = 3
 
         ## 変換前:
-        csv_file = f"{data_dir}/timestamp{str(time)}/layout{str(gen_number)}-{str(layout_number)}.csv"
+        csv_file = (
+            f"{data_dir}/{timestamp}/layout{str(gen_number)}-{str(layout_number)}.csv"
+        )
         graph = GraphParser(csv_file, DATASET_NAME)
 
         # 出力ファイルパス
@@ -31,14 +33,14 @@ def process_datasets():
         # 各CSVファイルの作成
         does_create_new_file = i == 0
         create_nodes_csv(
-            graph.nodes, time, output_dir, does_create_new_file, graph.clusters
+            graph.nodes, timestamp, output_dir, does_create_new_file, graph.clusters
         )
-        create_edges_csv(graph.edges, time, output_dir, does_create_new_file)
+        create_edges_csv(graph.edges, timestamp, output_dir, does_create_new_file)
         create_alluvial_nodes_csv(
-            graph.clusters, time, output_dir, does_create_new_file
+            graph.clusters, timestamp, output_dir, does_create_new_file
         )
 
-        print(f"[Timestamp {time}] All CSV files created successfully!")
+        print(f"[Timestamp {timestamp}] All CSV files created successfully!")
 
 
 def create_nodes_csv(nodes, timestamp, output_dir, does_create_new_file, clusters):
@@ -70,8 +72,8 @@ def create_nodes_csv(nodes, timestamp, output_dir, does_create_new_file, cluster
             "node_id": node.id,
             "x": node.x,
             "y": node.y,
-            "time": f"timestamp{timestamp}",
-            "cluster": f"C{cluster_id}_timestamp{timestamp}",  # clustersのIDを使用
+            "time": f"{timestamp}",
+            "cluster": f"C{cluster_id}_{timestamp}",  # clustersのIDを使用
             "label": node.label,
         }
         nodes_data.append(node_data)
@@ -99,7 +101,7 @@ def create_edges_csv(edges, timestamp, output_dir, does_create_new_file):
         edge_data = {
             "src": edge.node1,
             "dst": edge.node2,
-            "time": f"timestamp{timestamp}",
+            "time": f"{timestamp}",
         }
         edges_data.append(edge_data)
 
@@ -132,8 +134,8 @@ def create_alluvial_nodes_csv(clusters, timestamp, output_dir, does_create_new_f
     for cluster in clusters:
         # 各クラスターのデータを辞書として作成
         cluster_data = {
-            "time": f"timestamp{timestamp}",
-            "community_id": f"C{cluster.id}_timestamp{timestamp}",  # timestampを含む一意のID
+            "time": f"{timestamp}",
+            "community_id": f"C{cluster.id}_{timestamp}",  # timestampを含む一意のID
             "size": len(cluster.children),
             "label": f"C{cluster.id}",  # cluster.labelがない場合のデフォルト
         }

@@ -37,7 +37,7 @@ export default function Home() {
 
                     {/* Multi Graph ビュー（右側: 2/3） */}
                     <div className="lg:col-span-2">
-                        <MultiGraphChart timestamps={['timestamp1', 'timestamp2']} />
+                        <MultiGraphChart />
                     </div>
                 </div>
 

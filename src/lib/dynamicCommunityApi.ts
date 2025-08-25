@@ -44,21 +44,18 @@ export class DynamicCommunityDataProcessor {
     private edges: CsvEdge[] = [];
     private alluvialNodes: CsvAlluvialNode[] = [];
     private JACCARD_THRESHOLD: number = 0.1;
+    private timestamps: Timestamp[] = [];
 
-    constructor(nodes: CsvNode[], edges: CsvEdge[], alluvialNodes: CsvAlluvialNode[]) {
+    constructor(nodes: CsvNode[], edges: CsvEdge[], alluvialNodes: CsvAlluvialNode[], timestamps: Timestamp[]) {
         this.nodes = nodes;
         this.edges = edges;
         this.alluvialNodes = alluvialNodes;
+        this.timestamps = timestamps;
     }
 
     // 時刻の一覧を取得
     getTimestamps(): Timestamp[] {
-        const times = new Set<string>();
-        this.nodes.forEach(node => times.add(node.time));
-        this.edges.forEach(edge => times.add(edge.time));
-        this.alluvialNodes.forEach(alluvial => times.add(alluvial.time));
-
-        return Array.from(times).sort();
+        return this.timestamps;
     }
 
     // コミュニティブロックを生成（最適化アルゴリズム適用）
@@ -67,9 +64,8 @@ export class DynamicCommunityDataProcessor {
 
         // 初期ブロックを生成
         const initialBlocks: CommunityBlock[] = [];
-        const timestamps = this.getTimestamps();
 
-        timestamps.forEach(timestamp => {
+        this.timestamps.forEach(timestamp => {
             // その時刻のコミュニティを取得
             const communitiesInTime = this.alluvialNodes.filter(n => n.time === timestamp);
 
@@ -443,23 +439,26 @@ export class DynamicCommunityApiClient {
         nodes: CsvNode[];
         edges: CsvEdge[];
         alluvialNodes: CsvAlluvialNode[];
+        timestamps: Timestamp[];
     }> {
         try {
-            const [nodesResponse, edgesResponse, alluvialResponse] = await Promise.all([
+            const [nodesResponse, edgesResponse, alluvialResponse, timestampsResponse] = await Promise.all([
                 fetch(`${this.baseUrl}/data/nodes`),
                 fetch(`${this.baseUrl}/data/edges`),
-                fetch(`${this.baseUrl}/data/alluvial-nodes`)
+                fetch(`${this.baseUrl}/data/alluvial-nodes`),
+                fetch(`${this.baseUrl}/data/timestamps`)
             ]);
 
-            if (!nodesResponse.ok || !edgesResponse.ok || !alluvialResponse.ok) {
+            if (!nodesResponse.ok || !edgesResponse.ok || !alluvialResponse.ok || !timestampsResponse.ok) {
                 throw new Error('Failed to fetch CSV data');
             }
 
             // CSVテキストを取得
-            const [nodesText, edgesText, alluvialText] = await Promise.all([
+            const [nodesText, edgesText, alluvialText, timestampsText] = await Promise.all([
                 nodesResponse.text(),
                 edgesResponse.text(),
-                alluvialResponse.text()
+                alluvialResponse.text(),
+                timestampsResponse.text()
             ]);
 
             // CSVをパース
@@ -467,7 +466,10 @@ export class DynamicCommunityApiClient {
             const edges = this.parseCsvEdges(edgesText);
             const alluvialNodes = this.parseCsvAlluvialNodes(alluvialText);
 
-            return { nodes, edges, alluvialNodes };
+            // timestampsを取得
+            const timestamps = this.parseTimestamps(timestampsText);
+
+            return { nodes, edges, alluvialNodes, timestamps };
         } catch (error) {
             console.error('Error fetching CSV data:', error);
             throw error;
@@ -482,12 +484,12 @@ export class DynamicCommunityApiClient {
         dynamicCommunities: DynamicCommunity[];
         vertexStabilities: VertexStability[];
     }> {
-        const { nodes, edges, alluvialNodes } = await this.fetchCsvData();
+        const { nodes, edges, alluvialNodes, timestamps } = await this.fetchCsvData();
 
-        const processor = new DynamicCommunityDataProcessor(nodes, edges, alluvialNodes);
+        const processor = new DynamicCommunityDataProcessor(nodes, edges, alluvialNodes, timestamps);
 
         return {
-            timestamps: processor.getTimestamps(),
+            timestamps: timestamps,
             communityBlocks: processor.generateCommunityBlocks(),
             transitionCurves: processor.generateTransitionCurves(),
             dynamicCommunities: processor.generateDynamicCommunities(),
@@ -552,6 +554,12 @@ export class DynamicCommunityApiClient {
 
             return alluvialNode;
         });
+    }
+
+    parseTimestamps(csvText: string): Timestamp[] {
+        // timestampはリストで返ってくる
+        const timestamps = JSON.parse(csvText).map((timestamp: Timestamp) => timestamp);
+        return timestamps;
     }
 }
 

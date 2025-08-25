@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 import os
-from app.process_datasets import process_datasets
+from app.process_datasets import process_datasets, data_dir, timestamps
 
 app = FastAPI(
     title="Dynamic Graph Explorer API",
@@ -18,11 +18,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# データディレクトリの絶対パスを設定
-current_dir = os.path.dirname(os.path.abspath(__file__))
-data_dir = os.path.join(current_dir, "..", "data")
-
 # データファイルの変換処理
 process_datasets()
 
@@ -91,6 +86,12 @@ async def get_alluvial_links():
     return await get_csv_response(
         os.path.join(data_dir, "processed", "alluvial_links.csv"), "alluvial_links.csv"
     )
+
+
+@app.get("/data/timestamps")
+async def get_timestamps():
+    """時刻データを取得"""
+    return timestamps
 
 
 if __name__ == "__main__":

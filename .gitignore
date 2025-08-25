@@ -9,4 +9,8 @@ backend/app/__pycache__/*
 
 # 加工後のファイルは毎回差分となるため git 管理しない
 backend/data/processed/*
+backend/data/NBAF_coauthors/*
 
+.DS_Store
+
+prepare.py

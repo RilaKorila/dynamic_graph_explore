@@ -2,25 +2,27 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useVizStore } from '@/store/vizStore'
+import { useDynamicCommunityStore } from '@/store/dynamicCommunityStore'
 import { fetchNodes, fetchEdges } from '@/lib/api'
 import { Node, Edge } from '@/types'
 import SingleGraphChart from './SingleGraphChart'
 
-interface MultiGraphChartProps {
-    timestamps?: string[]
-}
 
 interface GraphData {
     nodes: Node[]
     edges: Edge[]
 }
 
-export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp2'] }: MultiGraphChartProps) {
+export default function MultiGraphChart() {
     const { timeRange } = useVizStore()  // timeRangeを取得
+    const { timestamps: storeTimestamps } = useDynamicCommunityStore()  // storeからtimestampsを取得
     const [data, setData] = useState<GraphData | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+    // storeから取得したtimestampsを使用
+    const effectiveTimestamps = storeTimestamps
 
     // データの取得
     useEffect(() => {
@@ -47,13 +49,13 @@ export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp
     useEffect(() => {
         if (scrollContainerRef.current && timeRange[0] === timeRange[1]) {
             const selectedTimestamp = timeRange[0]
-            const timestampIndex = timestamps.indexOf(selectedTimestamp)
+            const timestampIndex = effectiveTimestamps.indexOf(selectedTimestamp)
 
             if (timestampIndex !== -1) {
                 const container = scrollContainerRef.current
                 const scrollWidth = container.scrollWidth
                 const containerWidth = container.clientWidth
-                const scrollPosition = (timestampIndex / (timestamps.length - 1)) * (scrollWidth - containerWidth)
+                const scrollPosition = (timestampIndex / (effectiveTimestamps.length - 1)) * (scrollWidth - containerWidth)
 
                 container.scrollTo({
                     left: scrollPosition,
@@ -61,7 +63,7 @@ export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp
                 })
             }
         }
-    }, [timeRange, timestamps])
+    }, [timeRange, effectiveTimestamps])
 
     // 各timestampのデータを抽出
     const getDataForTimestamp = (timestamp: string) => {
@@ -96,7 +98,7 @@ export default function MultiGraphChart({ timestamps = ['timestamp1', 'timestamp
             {/* 横スクロール可能なコンテナ */}
             <div className="overflow-x-auto" ref={scrollContainerRef}>
                 <div className="flex gap-8 min-w-max pb-4 px-4">
-                    {timestamps.map((timestamp) => {
+                    {effectiveTimestamps.map((timestamp) => {
                         const { nodes, edges } = getDataForTimestamp(timestamp)
                         const isSelected = timeRange.includes(timestamp)
                         const isSingleSelection = timeRange[0] === timestamp && timeRange[1] === timestamp
