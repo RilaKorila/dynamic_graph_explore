@@ -356,7 +356,6 @@ export default function GraphChart() {
 
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Graph View</h2>
             <div ref={containerRef} className="h-[600px] relative bg-gray-50 rounded border">
                 {/* グラフの統計情報 */}
                 <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded px-2 py-1 text-xs text-gray-600">

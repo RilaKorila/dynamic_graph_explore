@@ -50,6 +50,20 @@ export default function SingleGraphChart({
     useEffect(() => {
         if (!data || !containerRef.current) return
 
+        // コンテナのサイズをチェック
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+            // コンテナサイズが0の場合は少し待ってから再試行
+            setTimeout(() => {
+                if (containerRef.current && data) {
+                    const graph = new Graph()
+                    graphRef.current = graph
+                    buildGraph(graph, data.nodes, data.edges)
+                }
+            }, 100);
+            return;
+        }
+
         // 既存のSigmaインスタンスをクリア
         if (sigmaRef.current) {
             sigmaRef.current.kill()
@@ -121,6 +135,9 @@ export default function SingleGraphChart({
             labelGridCellSize: 60,
             labelRenderedSizeThreshold: 6,
 
+            // コンテナエラーを防ぐ設定
+            allowInvalidContainer: true,
+
             // ノードの表示制御設定
             nodeReducer: (_, data) => ({
                 ...data,
@@ -139,6 +156,25 @@ export default function SingleGraphChart({
         })
 
         sigmaRef.current = sigma
+
+        // コンテナのサイズ変更を監視してSigma.jsをリサイズ
+        const resizeObserver = new ResizeObserver(() => {
+            if (sigma && containerRef.current) {
+                const rect = containerRef.current.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    sigma.resize();
+                }
+            }
+        });
+
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current);
+        }
+
+        // クリーンアップ時にResizeObserverを切断
+        sigma.on('kill', () => {
+            resizeObserver.disconnect();
+        });
 
         // ノードのホバーイベント
         sigma.on('enterNode', (event) => {

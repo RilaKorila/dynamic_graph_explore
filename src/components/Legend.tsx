@@ -63,7 +63,6 @@ export default function Legend() {
 
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Community Legend</h2>
 
             {/* 各timestampごとにコミュニティを表示 */}
             {timestampOrder.map(timestamp => {

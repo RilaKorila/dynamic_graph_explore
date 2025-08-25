@@ -47,7 +47,7 @@ export default function MultiGraphChart() {
 
     // 選択されたtimestampに自動スクロール
     useEffect(() => {
-        if (scrollContainerRef.current && timeRange[0] === timeRange[1]) {
+        if (scrollContainerRef.current && effectiveTimestamps && timeRange[0] === timeRange[1]) {
             const selectedTimestamp = timeRange[0]
             const timestampIndex = effectiveTimestamps.indexOf(selectedTimestamp)
 
@@ -77,7 +77,7 @@ export default function MultiGraphChart() {
 
     if (loading) {
         return (
-            <div className="h-[500px] bg-gray-100 rounded flex items-center justify-center">
+            <div className="h-[800px] bg-gray-100 rounded flex items-center justify-center">
                 <div className="text-gray-500">Loading Graphs...</div>
             </div>
         )
@@ -85,7 +85,7 @@ export default function MultiGraphChart() {
 
     if (error) {
         return (
-            <div className="h-[500px] bg-gray-100 rounded flex items-center justify-center">
+            <div className="h-[800px] bg-gray-100 rounded flex items-center justify-center">
                 <div className="text-red-500">{error}</div>
             </div>
         )
@@ -93,7 +93,6 @@ export default function MultiGraphChart() {
 
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Graphs View</h2>
 
             {/* 横スクロール可能なコンテナ */}
             <div className="overflow-x-auto" ref={scrollContainerRef}>

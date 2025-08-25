@@ -85,12 +85,22 @@ export const DynamicCommunityCanvas: React.FC = () => {
             : filteredBlocks;
 
         // 遷移曲線も同様にフィルタリング
-        const filteredCurves = selectedCommunities.size === 0
+        let filteredCurves = selectedCommunities.size === 0
             ? transitionCurves
             : transitionCurves.filter(curve =>
                 selectedCommunities.has(curve.source.community) ||
                 selectedCommunities.has(curve.target.community)
             );
+
+        // 時間範囲で遷移曲線もフィルタリング
+        if (timeRange) {
+            filteredCurves = filteredCurves.filter(curve => {
+                const sourceTime = curve.source.t;
+                const targetTime = curve.target.t;
+                return (sourceTime >= timeRange[0] && sourceTime <= timeRange[1]) ||
+                    (targetTime >= timeRange[0] && targetTime <= timeRange[1]);
+            });
+        }
 
         return { blocks: filteredBlocksByTime, curves: filteredCurves };
     }, [communityBlocks, transitionCurves, selectedCommunities, timeRange, timestamps]);

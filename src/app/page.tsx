@@ -20,29 +20,28 @@ export default function Home() {
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">
                     Dynamic Graph Explorer
                 </h1>
-                <p className="text-gray-600 mb-8">
-                    Alluvial と Graph Layout が連動する可視化プログラム
-                </p>
 
                 {/* 時刻スライダー（上側） */}
                 <div className="mb-8">
                     <TimeSlider />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    {/* Dynamic Community ビュー（左側: 1/3） */}
-                    <div className="lg:col-span-1">
-                        <DynamicCommunityCanvas />
-                    </div>
-
-                    {/* Multi Graph ビュー（右側: 2/3） */}
-                    <div className="lg:col-span-2">
-                        <MultiGraphChart />
-                    </div>
+                {/* Community Dynamics View */}
+                <div>
+                    <h2 className="text-xl font-semibold mb-4 mt-4">Community Dynamics View</h2>
+                    <DynamicCommunityCanvas />
                 </div>
 
-                {/* 凡例・検索（下側） */}
+
+                {/* Graph View */}
                 <div>
+                    <h2 className="text-xl font-semibold mb-4 mt-4">Graph View</h2>
+                    <MultiGraphChart />
+                </div>
+
+                {/* 凡例 */}
+                <div>
+                    <h2 className="text-xl font-semibold mb-4 mt-4">Community Legend</h2>
                     <Legend />
                 </div>
             </div>
