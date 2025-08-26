@@ -30,7 +30,6 @@ interface DynamicCommunityState {
     selectedNodeId: NodeId | null;
     selectedCommunityId: CommunityId | null;
     selectedTimestamp: Timestamp | null;
-    hoveredElement: { type: 'node' | 'community' | 'curve'; id: string } | null;
 
     // 計算状態
     isCalculating: boolean;
@@ -54,7 +53,6 @@ interface DynamicCommunityState {
     setSelectedNode: (nodeId: NodeId | null) => void;
     setSelectedCommunity: (communityId: CommunityId | null) => void;
     setSelectedTimestamp: (timestamp: Timestamp | null) => void;
-    setHoveredElement: (element: { type: 'node' | 'community' | 'curve'; id: string } | null) => void;
 
     setCalculating: (isCalculating: boolean) => void;
     setCalculationProgress: (progress: number) => void;
@@ -92,7 +90,6 @@ export const useDynamicCommunityStore = create<DynamicCommunityState>((set, get)
     selectedNodeId: null,
     selectedCommunityId: null,
     selectedTimestamp: null,
-    hoveredElement: null,
     isCalculating: false,
     calculationProgress: 0,
     isLoading: false,
@@ -115,7 +112,6 @@ export const useDynamicCommunityStore = create<DynamicCommunityState>((set, get)
     setSelectedNode: (nodeId) => set({ selectedNodeId: nodeId }),
     setSelectedCommunity: (communityId) => set({ selectedCommunityId: communityId }),
     setSelectedTimestamp: (timestamp) => set({ selectedTimestamp: timestamp }),
-    setHoveredElement: (element) => set({ hoveredElement: element }),
 
     setCalculating: (isCalculating) => set({ isCalculating }),
     setCalculationProgress: (progress) => set({ calculationProgress: progress }),

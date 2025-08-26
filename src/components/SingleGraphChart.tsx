@@ -183,7 +183,6 @@ export default function SingleGraphChart({
 
             // ノードをハイライト
             graph.setNodeAttribute(node, 'highlighted', true)
-            graph.setNodeAttribute(node, 'size', nodeData.size * 1.5)
 
             // 関連エッジをハイライト
             graph.forEachEdge((edge, attributes, source, target) => {
@@ -200,7 +199,6 @@ export default function SingleGraphChart({
 
             // ノードのハイライトを解除
             graph.setNodeAttribute(node, 'highlighted', false)
-            graph.setNodeAttribute(node, 'size', nodeData.size)
 
             // 関連エッジのハイライトを解除
             graph.forEachEdge((edge, attributes, source, target) => {

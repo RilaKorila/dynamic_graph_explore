@@ -28,8 +28,6 @@ export const DynamicCommunityCanvas: React.FC = () => {
         transitionCurves,
         config,
         selectedCommunityId,
-        hoveredElement,
-        setHoveredElement,
         fetchData,
         isLoading,
         error
@@ -239,7 +237,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
         });
 
         ctx.restore();
-    }, [transitionCurves, communityBlocks, config.colorMode, hoveredElement, dimensions]);
+    }, [transitionCurves, communityBlocks, config.colorMode, dimensions]);
 
     // ベジェ曲線の描画
     const drawBezierCurve = useCallback((ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) => {
@@ -334,38 +332,6 @@ export const DynamicCommunityCanvas: React.FC = () => {
     }, [draw]);
 
     // マウスイベントの処理
-    const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-
-        // ホバー判定（簡易版）
-        // TODO: より精密なヒットテストを実装
-        const scalesData = scales();
-        if (!scalesData) return;
-
-        // コミュニティブロックのホバー判定
-        const hoveredBlock = communityBlocks.find(block => {
-            const blockX = scalesData.xScale(block.t);
-            if (blockX === undefined) return false;
-
-            const blockY0 = scalesData.yScale(block.y0);
-            const blockY1 = scalesData.yScale(block.y1);
-
-            return x >= blockX - 25 && x <= blockX + 25 &&
-                y >= blockY0 && y <= blockY1;
-        });
-
-        if (hoveredBlock) {
-            setHoveredElement({ type: 'community', id: hoveredBlock.communityId });
-        } else {
-            setHoveredElement(null);
-        }
-    }, [communityBlocks, scales, setHoveredElement]);
-
     const handleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -430,7 +396,6 @@ export const DynamicCommunityCanvas: React.FC = () => {
                 width={dimensions.width}
                 height={dimensions.height}
                 className="border border-gray-300 rounded-lg cursor-crosshair"
-                onMouseMove={handleMouseMove}
                 onClick={handleClick}
             />
         </div>
