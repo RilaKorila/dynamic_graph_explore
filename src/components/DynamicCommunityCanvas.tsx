@@ -19,7 +19,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
     const [dimensions, setDimensions] = useState<CanvasDimensions>({
         width: 800,
         height: 1000,
-        margin: { top: 24, right: 24, bottom: 24, left: 120 }
+        margin: { top: 24, right: 24, bottom: 24, left: 24 }
     });
 
     const {
@@ -56,7 +56,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
                 setDimensions({
                     width: rect.width,
                     height: rect.height,
-                    margin: { top: 24, right: 24, bottom: 24, left: 120 }
+                    margin: { top: 24, right: 24, bottom: 24, left: 24 }
                 });
             }
         };
