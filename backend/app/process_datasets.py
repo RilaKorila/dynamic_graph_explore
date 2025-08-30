@@ -82,47 +82,6 @@ def find_dynamic_communities(clusters_by_timestamp):
     return dynamic_communities
 
 
-def find_dynamic_communities_archive(clusters_by_timestamp):
-    """時系列での動的コミュニティを推定"""
-    dynamic_communities = {}  # keyは cluster.id と timestampの連携
-    dynamic_communities_got_from_file = {}
-
-    # 各時刻のコミュニティを処理
-    for i, (timestamp, clusters) in enumerate(clusters_by_timestamp.items()):
-
-        fname = f"{data_dir}/dynamic_communities/dynamic_community_{i+1}.txt"
-        with open(fname, "r") as f:
-            for i, line in enumerate(f):
-                if i % 2 == 0:  # 偶数行目
-                    # 1行目 dynamic_community_id: , 2行目 node_id1,node_id2,node_id3,... の形式
-                    dynamic_community_id, _ = line.strip().split(":")
-                else:  # 奇数行目
-                    node_ids = line.strip().split(",")
-                    if line == "\n":
-                        continue
-                    # node_ids を int に変換
-                    dynamic_communities_got_from_file[dynamic_community_id] = [
-                        int(node_id) for node_id in node_ids
-                    ]
-
-        # clusters.children と node_ids が一致していればそのclustersのidをdynamic_community_idにする
-        for cluster in clusters:
-            dict_key = f"C{cluster.id}_{timestamp}"
-            for (
-                dynamic_community_id,
-                node_ids,
-            ) in dynamic_communities_got_from_file.items():
-                if set(cluster.children) == set(node_ids):
-                    print("================================================")
-                    print(f"{dict_key} <- {dynamic_community_id}")
-                    print(f"cluster.children: {cluster.children}")
-                    print(f"node_ids: {node_ids}")
-                    dynamic_communities[dict_key] = dynamic_community_id
-                    break
-
-    return dynamic_communities
-
-
 def process_datasets():
     print("Processing datasets...")
 
