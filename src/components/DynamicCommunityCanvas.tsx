@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 import { useDynamicCommunityStore } from '../store/dynamicCommunityStore';
 import { useVizStore } from '../store/vizStore';
 import { Timestamp } from '../types';
-import { getCommunityColor } from '../lib/colors';
+import { getDynamicCommunityColor } from '../lib/colors';
 
 interface CanvasDimensions {
     width: number;
@@ -83,7 +83,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
             : filteredBlocks;
 
         // 遷移曲線も同様にフィルタリング
-        let filteredCurves = selectedCommunities.size === 0
+        const filteredCurves = selectedCommunities.size === 0
             ? transitionCurves
             : transitionCurves.filter(curve =>
                 selectedCommunities.has(curve.source.community) ||
@@ -91,16 +91,16 @@ export const DynamicCommunityCanvas: React.FC = () => {
             );
 
         // 時間範囲で遷移曲線もフィルタリング
-        if (timeRange) {
-            filteredCurves = filteredCurves.filter(curve => {
+        const filteredCurvesByTime = timeRange
+            ? filteredCurves.filter(curve => {
                 const sourceTime = curve.source.t;
                 const targetTime = curve.target.t;
                 return (sourceTime >= timeRange[0] && sourceTime <= timeRange[1]) ||
                     (targetTime >= timeRange[0] && targetTime <= timeRange[1]);
-            });
-        }
+            })
+            : filteredCurves;
 
-        return { blocks: filteredBlocksByTime, curves: filteredCurves };
+        return { blocks: filteredBlocksByTime, curves: filteredCurvesByTime };
     }, [communityBlocks, transitionCurves, selectedCommunities, timeRange, timestamps]);
 
     // D3スケールの設定
@@ -135,8 +135,8 @@ export const DynamicCommunityCanvas: React.FC = () => {
             const y1 = scales.yScale(block.y1);
             const blockHeight = y1 - y0;
 
-            // 背景色（コミュニティIDベース、Graphと同じ色）
-            const communityColor = getCommunityColor(block.communityId);
+            // 背景色（動的コミュニティIDベース、Graphと同じ色）
+            const communityColor = getDynamicCommunityColor(block.dynamicCommunityId);
             ctx.fillStyle = communityColor;
             ctx.fillRect(x - 25, y0, 50, blockHeight);
 
@@ -322,6 +322,8 @@ export const DynamicCommunityCanvas: React.FC = () => {
         drawAxes(ctx, scalesData);
 
         // フィルタリングされたデータで描画
+        console.log(filteredData.curves)
+        console.log(filteredData.blocks)
         drawTransitionCurves(ctx, scalesData, filteredData.curves);
         drawCommunityBlocks(ctx, scalesData, filteredData.blocks);
     }, [dimensions, scales, drawAxes, drawCommunityBlocks, drawTransitionCurves, filteredData]);

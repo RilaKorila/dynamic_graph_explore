@@ -6,7 +6,7 @@ import { Sigma } from 'sigma'
 import Graph from 'graphology'
 import { fetchNodes, fetchEdges } from '@/lib/api'
 import { Node, Edge } from '@/types'
-import { getCommunityColor } from '@/lib/colors'
+import { getDynamicCommunityColor } from '@/lib/colors'
 
 export default function GraphFullScreenPage() {
     const params = useParams()
@@ -75,7 +75,7 @@ export default function GraphFullScreenPage() {
                 y: y,
                 size: 8,
                 label: node.label,
-                color: getCommunityColor(node.cluster),
+                color: getDynamicCommunityColor(node.dynamic_community_id),
                 cluster: node.cluster,
                 time: node.time,
                 hidden: false,

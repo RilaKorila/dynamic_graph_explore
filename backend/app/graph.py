@@ -16,7 +16,7 @@ class Edge:
 
 
 class Cluster:
-    def __init__(self, id, x, y, r, children, dynamic_community_id):
+    def __init__(self, id, x, y, r, children):
         self.id = int(id)
         self.x = float(x)
         self.y = float(y)
@@ -24,7 +24,6 @@ class Cluster:
         self.children = set()
         for child_id in children:
             self.children.add(int(child_id))
-        self.dynamic_community_id = int(dynamic_community_id)
 
 
 class Graph:

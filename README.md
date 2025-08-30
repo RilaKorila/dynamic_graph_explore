@@ -138,7 +138,6 @@ type DynamicCommunityState = {
 ```ts
 type VizConfig = {
   theta: number;                  // 追跡しきい値 (0..0.9)
-  colorMode: 'dynamic' | 'cStab' | 'vStab';  // 色分けモード
   edgeThreshold: { intra: number; inter: number };  // エッジ閾値
   nodeHeight: number;             // ノード高さ
   gaps: { node: number; community: number };  // 間隔設定
@@ -303,6 +302,44 @@ npm run dev
 2. `λ>0` で、連続時刻のコミュニティ順位変動（位置の入れ替え）が**明確に減少**すること
 3. 初期順序を変えても、最終的に**最小スコア**の順序が選ばれること
 4. 出現/消滅が混在するケースでも**決定的な順序**が得られること
+
+
+# 追加要件 — 動的コミュニティ配色（Dynamic Community Coloring）
+
+## 目的
+- 同じ動的コミュニティ系列に属するコミュニティ（時刻が違っても）を同一色で表示し、時間方向の追跡を容易にする。
+- 既存実装が使っている時刻別コミュニティIDから、動的コミュニティIDを導出し、色を DynamicCommunityId に紐づける。
+- Alluvial Viewだけでなく、Graph Viewの色も反映させたいので、DynamicCommunityIdと色情報の出しわけや各コンポーネントでの利用はcolors.tsに持たせること
+- dynamic_community_idに関する部分は、process_datasetsでデータ処理をしているので、できるだけそこで処理して、csvファイルに情報を格納すること
+
+## 入力
+- 離散時刻集合 \(T\)、各時刻のコミュニティ分割 \(P_t\)。
+- 時刻間のコミュニティ対応を得るための類似度指標（Jaccard）としきい値 \(\theta\)。
+- 現状の描画要素：`CommunityBlock{ t, communityId, ... }`。
+
+## 必須要件
+1. **動的コミュニティ推定**
+   - 隣接時刻でコミュニティ間類似度を計算し、\(\theta\) 以上を系列に連結。
+   - スプリット/マージ、ギャップも処理可能にする。
+
+2. **配色スキームの主原則**
+   - 色は DynamicCommunityId に一意割当。
+
+3. **色の割当方針**
+   - 異なる DynamicCommunityId 同士で十分に区別可能にする。
+   - 類似系列は近い色相／近接系列は遠い色相など、モード切替で制御可能。
+
+4. **安定表示**
+   - \(\theta\) の変更や再計算後も既存 DynamicCommunityId の色は保持する。
+   - 新規系列のみ未使用色を割当。
+
+5. **凡例・説明可能性**
+   - DynamicCommunityId 一覧を色チップ付きで提示可能。
+   - ブロック選択で系列全体をハイライト可能。
+
+## エッジケース
+- **スプリット/マージ**: 主系列を優先し、派生は別 DynamicCommunityId。  
+
 
 
 ## 引用

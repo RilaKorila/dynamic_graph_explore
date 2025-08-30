@@ -6,7 +6,7 @@ import Sigma from 'sigma'
 import { SquareArrowUpRight } from 'lucide-react'
 import { useVizStore } from '@/store/vizStore'
 import { Node, Edge } from '@/types'
-import { getCommunityColor } from '@/lib/colors'
+import { getDynamicCommunityColor } from '@/lib/colors'
 
 interface SingleGraphChartProps {
     timestamp: string
@@ -35,11 +35,6 @@ export default function SingleGraphChart({
     const [data, setData] = useState<GraphData | null>(null)
 
     const { selectedCommunities, highlightedNodeIds } = useVizStore()
-
-    // colorByCommunity関数をuseCallbackで最適化
-    const colorByCommunity = useCallback((communityId: string) => {
-        return getCommunityColor(communityId)
-    }, [])
 
     // データの設定
     useEffect(() => {
@@ -98,7 +93,7 @@ export default function SingleGraphChart({
                 y: y,
                 size: Math.max(3, Math.min(15, 10 / 20)), // デフォルトサイズを使用
                 label: node.label,
-                color: colorByCommunity(node.cluster),
+                color: getDynamicCommunityColor(node.dynamic_community_id),
                 cluster: node.cluster,
                 time: node.time,
                 // パフォーマンス最適化用の属性
@@ -309,7 +304,13 @@ export default function SingleGraphChart({
                 graph.setNodeAttribute(node, 'size', HIGHLIGHTED_NODE_SIZE)
                 graph.setNodeAttribute(node, 'alpha', HIGHLIGHTED_ALPHA)
             } else {
-                graph.setNodeAttribute(node, 'color', colorByCommunity(attributes.cluster))
+                // 動的コミュニティIDが利用可能な場合はそれを使用、そうでなければ従来の方法
+                const nodeData = data?.nodes.find(n => n.node_id === node)
+                if (nodeData?.dynamic_community_id) {
+                    graph.setNodeAttribute(node, 'color', getDynamicCommunityColor(nodeData.dynamic_community_id))
+                } else {
+                    graph.setNodeAttribute(node, 'color', colorByCommunity(attributes.cluster))
+                }
             }
         })
 

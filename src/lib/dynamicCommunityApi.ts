@@ -7,6 +7,7 @@ import {
     VertexStability,
 } from '../types';
 import { CommunityOrderingOptimizer } from './communityOrderingOptimizer';
+import { setGlobalDcRange } from './colors';
 
 // CSVデータの型定義
 interface CsvNode {
@@ -16,6 +17,7 @@ interface CsvNode {
     time: string;
     cluster: string;
     label: string;
+    dynamic_community_id: string;
 }
 
 interface CsvEdge {
@@ -29,6 +31,7 @@ interface CsvAlluvialNode {
     community_id: string;
     size: number;
     label: string;
+    dynamic_community_id: string;
 }
 
 // APIレスポンスの型定義
@@ -92,7 +95,8 @@ export class DynamicCommunityDataProcessor {
                     nodes: communityNodes,
                     density,
                     stability,
-                    label: community.label
+                    label: community.label,
+                    dynamicCommunityId: community.dynamic_community_id
                 };
 
                 initialBlocks.push(block);
@@ -257,7 +261,8 @@ export class DynamicCommunityDataProcessor {
                     nodes: communityNodes,
                     density,
                     stability,
-                    label: community.label
+                    label: community.label,
+                    dynamicCommunityId: community.dynamic_community_id
                 };
 
                 blocks.push(block);
@@ -486,6 +491,9 @@ export class DynamicCommunityApiClient {
     }> {
         const { nodes, edges, alluvialNodes, timestamps } = await this.fetchCsvData();
 
+        // 動的コミュニティIDの範囲を設定
+        this.setGlobalDcRangeFromAlluvialNodes(alluvialNodes);
+
         const processor = new DynamicCommunityDataProcessor(nodes, edges, alluvialNodes, timestamps);
 
         return {
@@ -554,6 +562,29 @@ export class DynamicCommunityApiClient {
 
             return alluvialNode;
         });
+    }
+
+    // 動的コミュニティIDの範囲を設定するメソッド
+    private setGlobalDcRangeFromAlluvialNodes(alluvialNodes: CsvAlluvialNode[]): void {
+        // 全ての動的コミュニティIDを抽出
+        const dynamicCommunityIds = alluvialNodes.map(node => node.dynamic_community_id);
+
+        // 数値に変換して最小・最大値を計算
+        let minDc = Infinity;
+        let maxDc = -Infinity;
+
+        dynamicCommunityIds.forEach(id => {
+            const dcNumber = parseInt(id);
+            if (!isNaN(dcNumber)) {
+                minDc = Math.min(minDc, dcNumber);
+                maxDc = Math.max(maxDc, dcNumber);
+            }
+        });
+
+        // グローバルな範囲を設定
+        if (minDc !== Infinity && maxDc !== -Infinity) {
+            setGlobalDcRange(minDc, maxDc);
+        }
     }
 
     parseTimestamps(csvText: string): Timestamp[] {

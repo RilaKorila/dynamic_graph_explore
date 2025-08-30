@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useVizStore } from '@/store/vizStore'
 import { useDynamicCommunityStore } from '@/store/dynamicCommunityStore'
 import { fetchAlluvialNodes } from '@/lib/api'
-import { getCommunityColor } from '@/lib/colors'
+import { getDynamicCommunityColor } from '@/lib/colors'
 import { CommunityInfo } from '@/types/index'
 
 export default function Legend() {
@@ -26,7 +26,8 @@ export default function Legend() {
                     time: node.time,
                     size: node.size,
                     label: node.label,
-                    color: getCommunityColor(node.community_id)
+                    color: getDynamicCommunityColor(node.dynamic_community_id),
+                    dynamic_community_id: node.dynamic_community_id
                 }))
 
                 setCommunities(communityInfos)

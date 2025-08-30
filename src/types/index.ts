@@ -6,6 +6,7 @@ export interface Node {
     time: string
     cluster: string
     label: string
+    dynamic_community_id: string
 }
 
 // エッジデータの型定義
@@ -21,6 +22,7 @@ export interface AlluvialNode {
     community_id: string
     size: number
     label: string
+    dynamic_community_id: string
 }
 
 // 描画用の型定義
@@ -64,6 +66,7 @@ export interface CommunityInfo {
     size: number
     label: string
     color: string
+    dynamic_community_id?: string
 }
 
 // 動的コミュニティ可視化用の型定義（仕様書準拠）
@@ -136,6 +139,7 @@ export interface CommunityBlock {
     density: number; // 相対密度 ρ
     stability: number; // コミュニティ安定性
     label: string;
+    dynamicCommunityId?: string;
 }
 
 export interface TransitionCurve {

@@ -1,36 +1,41 @@
 import * as d3 from 'd3'
 
-// コミュニティIDから色を取得する共通関数
+// グローバルな最小・最大DC番号を管理
+let globalMinDc: number = 0
+let globalMaxDc: number = 0
+
+// グローバルなDC番号の範囲を設定
+export const setGlobalDcRange = (minDc: number, maxDc: number): void => {
+    globalMinDc = minDc
+    globalMaxDc = maxDc
+}
+
+// グローバルなDC番号の範囲を取得
+export const getGlobalDcRange = (): { minDc: number; maxDc: number } => {
+    return { minDc: globalMinDc, maxDc: globalMaxDc }
+}
+
+// 動的コミュニティIDから色を取得する関数
+export const getDynamicCommunityColor = (dynamicCommunityId: string): string => {
+    // 純粋な数字の動的コミュニティIDから色を取得
+    const dcNumber = parseInt(dynamicCommunityId)
+    // グローバルな最小・最大DC番号を取得
+    const { minDc, maxDc } = getGlobalDcRange()
+
+    // 最小・最大のDC番号でスケールして0-1の範囲に正規化
+    const normalizedValue = (dcNumber - minDc) / (maxDc - minDc)
+    // interpolateTurboで連続的な色を生成
+    return d3.interpolateTurbo(normalizedValue)
+}
+
+// コミュニティIDから色を取得する共通関数（後方互換性のため）
 export const getCommunityColor = (communityId: string): string => {
-    // 固定のカラーパレット（D3のTableau10スキームを使用）
-    const palette = d3.schemeTableau10
-
-    // C<number> 形式のコミュニティIDから色を取得
-    const match = communityId.match(/C(\d+)/)
-    if (match) {
-        const index = parseInt(match[1]) - 1
-        return palette[index % palette.length]
-    }
-
-    // フォールバック: ハッシュベースの色
-    let hash = 0
-    for (let i = 0; i < communityId.length; i++) {
-        hash = ((hash << 5) - hash) + communityId.charCodeAt(i)
-        hash |= 0
-    }
-    return palette[Math.abs(hash) % palette.length]
+    const cNumber = parseInt(communityId)
+    // interpolateTurboで連続的な色を生成
+    return d3.interpolateTurbo(cNumber / 1000)
 }
 
-// コミュニティIDのリストから色マッピングを生成
-export const createCommunityColorMap = (communityIds: string[]): Map<string, string> => {
-    const colorMap = new Map<string, string>()
-    communityIds.forEach(id => {
-        colorMap.set(id, getCommunityColor(id))
-    })
-    return colorMap
-}
-
-// コミュニティIDの配列を取得（重複除去・ソート）
+// コミュニティIDの配列を取得（重複除去・ソート）（後方互換性のため）
 export const getUniqueCommunityIds = (nodes: Array<{ cluster: string } | { community_id: string }>): string[] => {
     const communityIds = new Set<string>()
 
