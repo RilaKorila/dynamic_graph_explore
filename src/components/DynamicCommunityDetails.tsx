@@ -13,12 +13,10 @@ export const DynamicCommunityDetails: React.FC = () => {
     const {
         selectedNodeId,
         selectedCommunityId,
-        hoveredElement,
         communityBlocks,
         transitionCurves,
         dynamicCommunities,
         vertexStabilities,
-        config
     } = useDynamicCommunityStore();
 
     // 選択されたコミュニティの情報
@@ -31,20 +29,8 @@ export const DynamicCommunityDetails: React.FC = () => {
         ? vertexStabilities.find(v => v.node === selectedNodeId)
         : null;
 
-    // ホバーされた要素の情報
-    const hoveredCommunity = hoveredElement?.type === 'community'
-        ? communityBlocks.find(b => b.communityId === hoveredElement.id)
-        : null;
-
-    const hoveredCurve = hoveredElement?.type === 'curve'
-        ? transitionCurves.find(c =>
-            `${c.source.t}-${c.source.community}-${c.target.t}-${c.target.community}` === hoveredElement.id
-        )
-        : null;
-
     // 表示する情報の決定（選択 > ホバー > デフォルト）
-    const displayInfo = selectedCommunity || hoveredCommunity ||
-        selectedNodeStability || hoveredCurve || null;
+    const displayInfo = selectedCommunity || selectedNodeStability || null;
 
     if (!displayInfo) {
         return (
