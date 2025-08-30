@@ -87,7 +87,6 @@ export default function SingleGraphChart({
                 console.warn(`Invalid coordinates for node ${node.node_id}: x=${node.x}, y=${node.y}`)
                 return // 無効な座標のノードはスキップ
             }
-            console.log(node.dynamic_community_id)
 
             graph.addNode(node.node_id, {
                 x: x,

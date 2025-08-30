@@ -91,8 +91,6 @@ timestamp1,C14_timestamp1,27,C14
 
 ```ts
 type DynamicCommunityState = {
-  // 設定
-  config: VizConfig;
   
   // データ
   timestamps: Timestamp[];
@@ -133,17 +131,6 @@ type DynamicCommunityState = {
 * **維持パターン** 🟢：1対1の安定した遷移
 * **孤立** 🔴：遷移がないコミュニティ
 
-### 4.3 設定パラメータ
-
-```ts
-type VizConfig = {
-  theta: number;                  // 追跡しきい値 (0..0.9)
-  edgeThreshold: { intra: number; inter: number };  // エッジ閾値
-  nodeHeight: number;             // ノード高さ
-  gaps: { node: number; community: number };  // 間隔設定
-  drawOrderPolicy: 'groupsFirst' | 'groupsBack';  // 描画順序
-};
-```
 
 ---
 

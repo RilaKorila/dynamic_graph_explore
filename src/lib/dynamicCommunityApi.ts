@@ -184,7 +184,6 @@ export class DynamicCommunityDataProcessor {
                             target: { t: nextTime, y: targetY, community: nextComm.community_id },
                             nodes,
                             weight: normalizedWeight,
-                            rank: this.calculateTransitionRank(normalizedWeight, nodes.length),
                             dynamicCommunityId: this.generateDynamicCommunityId(currentComm.community_id, nextComm.community_id)
                         });
                     }
@@ -370,11 +369,6 @@ export class DynamicCommunityDataProcessor {
         const targetNodes = new Set(this.nodes.filter(n => n.cluster === targetCommunityId).map(n => n.node_id));
 
         return Array.from(sourceNodes).filter(id => targetNodes.has(id));
-    }
-
-    private calculateTransitionRank(weight: number, nodeCount: number): number {
-        // 重みとノード数に基づくランク計算
-        return weight * nodeCount;
     }
 
     private generateDynamicCommunityId(sourceCommunityId: string, targetCommunityId: string): string {

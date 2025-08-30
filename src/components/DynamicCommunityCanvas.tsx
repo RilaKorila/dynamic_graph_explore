@@ -26,7 +26,6 @@ export const DynamicCommunityCanvas: React.FC = () => {
         timestamps,
         communityBlocks,
         transitionCurves,
-        config,
         selectedCommunityId,
         fetchData,
         isLoading,
@@ -38,7 +37,6 @@ export const DynamicCommunityCanvas: React.FC = () => {
         selectedCommunities,
         toggleCommunity,
         timeRange,
-        currentTime
     } = useVizStore();
 
     // データの取得
@@ -237,7 +235,7 @@ export const DynamicCommunityCanvas: React.FC = () => {
         });
 
         ctx.restore();
-    }, [transitionCurves, communityBlocks, config.colorMode, dimensions]);
+    }, [transitionCurves, communityBlocks, dimensions]);
 
     // ベジェ曲線の描画
     const drawBezierCurve = useCallback((ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) => {
@@ -322,8 +320,6 @@ export const DynamicCommunityCanvas: React.FC = () => {
         drawAxes(ctx, scalesData);
 
         // フィルタリングされたデータで描画
-        console.log(filteredData.curves)
-        console.log(filteredData.blocks)
         drawTransitionCurves(ctx, scalesData, filteredData.curves);
         drawCommunityBlocks(ctx, scalesData, filteredData.blocks);
     }, [dimensions, scales, drawAxes, drawCommunityBlocks, drawTransitionCurves, filteredData]);

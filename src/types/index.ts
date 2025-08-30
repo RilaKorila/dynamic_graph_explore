@@ -109,27 +109,6 @@ export interface VertexStability {
     stability: number;
 }
 
-export interface LayoutOrdering {
-    // y-order for each t: array of nodes in vertical order (grouped by community)
-    yOrderByT: Record<Timestamp, NodeId[]>;
-    // vertical extents per community block
-    blockByT: Record<Timestamp, Record<CommunityId, { y0: number; y1: number }>>;
-}
-
-export interface TransitionRank {
-    // per t: ranks for curves (higher drawn earlier or later per policy)
-    rankByT: Record<Timestamp, Record<NodeId, number>>;
-}
-
-export interface VizConfig {
-    theta: number;                  // 追跡しきい値 (0..0.9)
-    colorMode: 'dynamic' | 'cStab' | 'vStab';
-    edgeThreshold: { intra: number; inter: number };
-    nodeHeight: number;
-    gaps: { node: number; community: number };
-    drawOrderPolicy: 'groupsFirst' | 'groupsBack';
-}
-
 export interface CommunityBlock {
     t: Timestamp;
     communityId: CommunityId;
@@ -147,6 +126,5 @@ export interface TransitionCurve {
     target: { t: Timestamp; y: number; community: CommunityId };
     nodes: NodeId[];
     weight: number;
-    rank: number;
     dynamicCommunityId: string;
 }
