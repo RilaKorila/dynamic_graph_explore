@@ -59,7 +59,6 @@ export class CommunityOrderingOptimizer {
 
         // 複数の初期順序で試行
         for (let restart = 0; restart < this.config.restarts; restart++) {
-            console.log(`試行 ${restart + 1}/${this.config.restarts}`);
 
             const initialOrder = this.generateInitialOrder(timestamps, restart);
             const result = this.optimizeOrderAtTime(timestamps, initialOrder);
@@ -135,7 +134,6 @@ export class CommunityOrderingOptimizer {
         // 往復スイープ
         for (let sweep = 0; sweep < this.config.sweepsMax; sweep++) {
             const sweepDirection = sweep % 2 === 0 ? 'left-to-right' : 'right-to-left';
-            console.log(`🔄 スイープ ${sweep + 1}: ${sweepDirection}`);
 
             let improved = false;
 
@@ -174,26 +172,19 @@ export class CommunityOrderingOptimizer {
 
             // スコア評価
             const currentScore = this.evaluateOrdering(currentOrder);
-            console.log(`スイープ ${sweep + 1} スコア: ${currentScore.toFixed(4)}`);
 
             if (currentScore < bestScore) {
                 bestScore = currentScore;
                 bestOrder = { ...currentOrder };
                 noImprovementCount = 0;
                 improved = true;
-                console.log(`改善: ${bestScore.toFixed(4)}`);
             } else {
                 noImprovementCount++;
             }
 
             // 早期打ち切り
             if (noImprovementCount >= this.config.earlyStopThreshold) {
-                console.log(`早期打ち切り: ${this.config.earlyStopThreshold}回連続で改善なし`);
                 break;
-            }
-
-            if (!improved) {
-                console.log(`スイープ ${sweep + 1}: 改善なし`);
             }
         }
 
@@ -397,8 +388,6 @@ export class CommunityOrderingOptimizer {
                         y0,
                         y1
                     };
-
-                    console.log(`📍 ${communityId} (${timestamp}): y0=${y0.toFixed(3)}, y1=${y1.toFixed(3)}`);
                 }
             });
         });

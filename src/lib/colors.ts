@@ -27,25 +27,3 @@ export const getDynamicCommunityColor = (dynamicCommunityId: string): string => 
     // interpolateTurboで連続的な色を生成
     return d3.interpolateTurbo(normalizedValue)
 }
-
-// コミュニティIDから色を取得する共通関数（後方互換性のため）
-export const getCommunityColor = (communityId: string): string => {
-    const cNumber = parseInt(communityId)
-    // interpolateTurboで連続的な色を生成
-    return d3.interpolateTurbo(cNumber / 1000)
-}
-
-// コミュニティIDの配列を取得（重複除去・ソート）（後方互換性のため）
-export const getUniqueCommunityIds = (nodes: Array<{ cluster: string } | { community_id: string }>): string[] => {
-    const communityIds = new Set<string>()
-
-    nodes.forEach(node => {
-        if ('cluster' in node) {
-            communityIds.add(node.cluster)
-        } else if ('community_id' in node) {
-            communityIds.add(node.community_id)
-        }
-    })
-
-    return Array.from(communityIds).sort()
-}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Graph from 'graphology'
 import Sigma from 'sigma'
 import { SquareArrowUpRight } from 'lucide-react'
@@ -32,7 +32,7 @@ export default function SingleGraphChart({
     const containerRef = useRef<HTMLDivElement>(null)
     const sigmaRef = useRef<Sigma | null>(null)
     const graphRef = useRef<Graph | null>(null)
-    const [data, setData] = useState<GraphData | null>(null)
+    const [data, setData] = useState<GraphData>({ nodes: [], edges: [] })
 
     const { selectedCommunities, highlightedNodeIds } = useVizStore()
 
@@ -87,6 +87,7 @@ export default function SingleGraphChart({
                 console.warn(`Invalid coordinates for node ${node.node_id}: x=${node.x}, y=${node.y}`)
                 return // 無効な座標のノードはスキップ
             }
+            console.log(node.dynamic_community_id)
 
             graph.addNode(node.node_id, {
                 x: x,
@@ -190,7 +191,6 @@ export default function SingleGraphChart({
 
         sigma.on('leaveNode', (event) => {
             const node = event.node
-            const nodeData = graph.getNodeAttributes(node)
 
             // ノードのハイライトを解除
             graph.setNodeAttribute(node, 'highlighted', false)
@@ -303,14 +303,6 @@ export default function SingleGraphChart({
             if (isHighlighted) {
                 graph.setNodeAttribute(node, 'size', HIGHLIGHTED_NODE_SIZE)
                 graph.setNodeAttribute(node, 'alpha', HIGHLIGHTED_ALPHA)
-            } else {
-                // 動的コミュニティIDが利用可能な場合はそれを使用、そうでなければ従来の方法
-                const nodeData = data?.nodes.find(n => n.node_id === node)
-                if (nodeData?.dynamic_community_id) {
-                    graph.setNodeAttribute(node, 'color', getDynamicCommunityColor(nodeData.dynamic_community_id))
-                } else {
-                    graph.setNodeAttribute(node, 'color', colorByCommunity(attributes.cluster))
-                }
             }
         })
 
@@ -351,7 +343,7 @@ export default function SingleGraphChart({
         applyFilters(graph, sigma)
 
 
-    }, [selectedCommunities, highlightedNodeIds, colorByCommunity])
+    }, [selectedCommunities, highlightedNodeIds])
 
     // 別タブで大画面表示する関数
     const openInNewTab = () => {
