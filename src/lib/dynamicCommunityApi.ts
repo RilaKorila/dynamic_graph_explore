@@ -96,7 +96,8 @@ export class DynamicCommunityDataProcessor {
                     density,
                     stability,
                     label: community.label,
-                    dynamicCommunityId: community.dynamic_community_id
+                    dynamicCommunityId: community.dynamic_community_id,
+                    communitySize: community.size
                 };
 
                 initialBlocks.push(block);
@@ -351,16 +352,6 @@ export class DynamicCommunityDataProcessor {
         });
 
         return matchingCommunities;
-    }
-
-    private getCommunityYPosition(timestamp: string, communityId: string): number | null {
-        const communities = this.alluvialNodes.filter(n => n.time === timestamp);
-        const index = communities.findIndex(n => n.community_id === communityId);
-
-        if (index === -1) return null;
-
-        const totalCommunities = communities.length;
-        return (index + 0.5) / totalCommunities;
     }
 
     private getTransitionNodes(sourceCommunityId: string, targetCommunityId: string): NodeId[] {

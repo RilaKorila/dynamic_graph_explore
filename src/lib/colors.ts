@@ -27,3 +27,12 @@ export const getDynamicCommunityColor = (dynamicCommunityId: string): string => 
     // interpolateTurboで連続的な色を生成
     return d3.interpolateTurbo(normalizedValue)
 }
+
+export const getCommunityColorForBigCommunity = (communitySize: number, communityId: string): string => {
+    const COLORED_COMMUNITY_SIZE_THRESHOLD = 4
+
+    if (communitySize > COLORED_COMMUNITY_SIZE_THRESHOLD) {
+        return getDynamicCommunityColor(communityId)
+    }
+    return '#a9a9a9'
+}

@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 import { useDynamicCommunityStore } from '../store/dynamicCommunityStore';
 import { useVizStore } from '../store/vizStore';
 import { Timestamp } from '../types';
-import { getDynamicCommunityColor } from '../lib/colors';
+import { getCommunityColorForBigCommunity } from '../lib/colors';
 
 interface CanvasDimensions {
     width: number;
@@ -134,7 +134,9 @@ export const DynamicCommunityCanvas: React.FC = () => {
             const blockHeight = y1 - y0;
 
             // 背景色（動的コミュニティIDベース、Graphと同じ色）
-            const communityColor = getDynamicCommunityColor(block.dynamicCommunityId);
+            // const communityColor = getDynamicCommunityColor(block.dynamicCommunityId);
+            console.log('block.size', block.communitySize)
+            const communityColor = getCommunityColorForBigCommunity(block.communitySize, block.dynamicCommunityId);
             ctx.fillStyle = communityColor;
             ctx.fillRect(x - 25, y0, 50, blockHeight);
 

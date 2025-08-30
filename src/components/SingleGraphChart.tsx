@@ -6,7 +6,7 @@ import Sigma from 'sigma'
 import { SquareArrowUpRight } from 'lucide-react'
 import { useVizStore } from '@/store/vizStore'
 import { Node, Edge } from '@/types'
-import { getDynamicCommunityColor } from '@/lib/colors'
+import { getCommunityColorForBigCommunity } from '@/lib/colors'
 
 interface SingleGraphChartProps {
     timestamp: string
@@ -76,6 +76,13 @@ export default function SingleGraphChart({
 
     // グラフ構築のヘルパー関数
     const buildGraph = (graph: Graph, nodes: Node[], edges: Edge[]) => {
+        // ノードのclusterごとに集計することで、clusterのサイズを取得する
+        const clusterSizeMap = new Map<string, number>()
+        for (const node of nodes) {
+            const num = clusterSizeMap.get(node.cluster) || 0
+            clusterSizeMap.set(node.cluster, num + 1)
+        }
+
         // ノードの追加
         nodes.forEach(node => {
             // 座標を確実に数値に変換
@@ -93,7 +100,8 @@ export default function SingleGraphChart({
                 y: y,
                 size: Math.max(3, Math.min(15, 10 / 20)), // デフォルトサイズを使用
                 label: node.label,
-                color: getDynamicCommunityColor(node.dynamic_community_id),
+                // color: getDynamicCommunityColor(node.dynamic_community_id),
+                color: getCommunityColorForBigCommunity(clusterSizeMap.get(node.cluster) || 0, node.dynamic_community_id),
                 cluster: node.cluster,
                 time: node.time,
                 // パフォーマンス最適化用の属性

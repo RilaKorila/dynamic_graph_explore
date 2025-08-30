@@ -119,6 +119,7 @@ export interface CommunityBlock {
     stability: number; // コミュニティ安定性
     label: string;
     dynamicCommunityId?: string;
+    communitySize: number;
 }
 
 export interface TransitionCurve {
