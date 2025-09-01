@@ -97,7 +97,7 @@ export default function MultiGraphChart() {
             {/* 横スクロール可能なコンテナ */}
             <div className="overflow-x-auto" ref={scrollContainerRef}>
                 <div className="flex gap-8 min-w-max pb-4 px-4">
-                    {effectiveTimestamps.map((timestamp) => {
+                    {effectiveTimestamps.slice(-5).map((timestamp) => {
                         const { nodes, edges } = getDataForTimestamp(timestamp)
                         const isSelected = timeRange.includes(timestamp)
                         const isSingleSelection = timeRange[0] === timestamp && timeRange[1] === timestamp

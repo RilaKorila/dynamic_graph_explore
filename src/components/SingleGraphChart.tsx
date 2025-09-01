@@ -6,7 +6,7 @@ import Sigma from 'sigma'
 import { SquareArrowUpRight } from 'lucide-react'
 import { useVizStore } from '@/store/vizStore'
 import { Node, Edge } from '@/types'
-import { getCommunityColorForBigCommunity } from '@/lib/colors'
+import { getCommunityColorForBigCommunity, getCommunityColorWithCustomCondition, getCommunityColorWithCustomConditionByTimestamp } from '@/lib/colors'
 
 interface SingleGraphChartProps {
     timestamp: string
@@ -101,7 +101,8 @@ export default function SingleGraphChart({
                 size: Math.max(3, Math.min(15, 10 / 20)), // デフォルトサイズを使用
                 label: node.label,
                 // color: getDynamicCommunityColor(node.dynamic_community_id),
-                color: getCommunityColorForBigCommunity(clusterSizeMap.get(node.cluster) || 0, node.dynamic_community_id),
+                // color: getCommunityColorForBigCommunity(clusterSizeMap.get(node.cluster) || 0, node.dynamic_community_id),
+                color: getCommunityColorWithCustomCondition(node.dynamic_community_id),
                 cluster: node.cluster,
                 time: node.time,
                 // パフォーマンス最適化用の属性
@@ -122,6 +123,7 @@ export default function SingleGraphChart({
             }
         })
 
+        console.log("created!")
         // Sigma.jsの設定
         const sigma = new Sigma(graph, containerRef.current!, {
             // レンダリング設定
@@ -160,29 +162,9 @@ export default function SingleGraphChart({
 
         sigmaRef.current = sigma
 
-        // コンテナのサイズ変更を監視してSigma.jsをリサイズ
-        const resizeObserver = new ResizeObserver(() => {
-            if (sigma && containerRef.current) {
-                const rect = containerRef.current.getBoundingClientRect();
-                if (rect.width > 0 && rect.height > 0) {
-                    sigma.resize();
-                }
-            }
-        });
-
-        if (containerRef.current) {
-            resizeObserver.observe(containerRef.current);
-        }
-
-        // クリーンアップ時にResizeObserverを切断
-        sigma.on('kill', () => {
-            resizeObserver.disconnect();
-        });
-
         // ノードのホバーイベント
         sigma.on('enterNode', (event) => {
             const node = event.node
-            const nodeData = graph.getNodeAttributes(node)
 
             // ノードをハイライト
             graph.setNodeAttribute(node, 'highlighted', true)
@@ -209,46 +191,6 @@ export default function SingleGraphChart({
                     graph.setEdgeAttribute(edge, 'size', 1)
                 }
             })
-        })
-
-        // ノードのクリックイベント
-        sigma.on('clickNode', (event) => {
-            const node = event.node
-            const nodeData = graph.getNodeAttributes(node)
-
-            // ノードのハイライト状態を切り替え
-            const currentHighlighted = highlightedNodeIds.has(node)
-            if (currentHighlighted) {
-                useVizStore.getState().toggleHighlightedNode(node)
-            } else {
-                useVizStore.getState().toggleHighlightedNode(node)
-            }
-
-            // 選択されたノードのコミュニティを一時的にハイライト
-            if (!currentHighlighted) {
-                // 他のノードのハイライトをクリアして、選択されたノードのみハイライト
-                graph.forEachNode((n, attrs) => {
-                    if (n !== node) {
-                        graph.setNodeAttribute(n, 'highlighted', false)
-                    }
-                })
-
-                // 選択されたノードのコミュニティを一時的に選択状態に追加
-                const currentSelected = useVizStore.getState().selectedCommunities
-                if (!currentSelected.has(nodeData.cluster)) {
-                    const newSelected = new Set(currentSelected)
-                    newSelected.add(nodeData.cluster)
-                    useVizStore.getState().setSelectedCommunities(newSelected)
-                }
-            } else {
-                // ハイライト解除時は、そのノードのコミュニティの選択も解除
-                const currentSelected = useVizStore.getState().selectedCommunities
-                if (currentSelected.has(nodeData.cluster)) {
-                    const newSelected = new Set(currentSelected)
-                    newSelected.delete(nodeData.cluster)
-                    useVizStore.getState().setSelectedCommunities(newSelected)
-                }
-            }
         })
 
         // カメラの自動調整
@@ -339,7 +281,7 @@ export default function SingleGraphChart({
         sigma.refresh()
     }
 
-    // // 選択状態の変更時の表示更新（独立したuseEffect）
+    // 選択状態の変更時の表示更新（独立したuseEffect）
     useEffect(() => {
         if (!graphRef.current || !sigmaRef.current) return
 
@@ -350,7 +292,7 @@ export default function SingleGraphChart({
         applyFilters(graph, sigma)
 
 
-    }, [selectedCommunities, highlightedNodeIds])
+    }, [selectedCommunities])
 
     // 別タブで大画面表示する関数
     const openInNewTab = () => {
@@ -368,20 +310,10 @@ export default function SingleGraphChart({
     }
 
     return (
-        <div className={`bg-white rounded-lg shadow-md p-4 transition-all duration-200 ${isHighlighted
-            ? highlightLevel === 'strong'
-                ? 'bg-blue-50 border-2 border-blue-500'
-                : 'bg-blue-25 border border-blue-300'
-            : 'border border-gray-200'
-            }`}>
+        <div className={`bg-white rounded-lg shadow-md p-4 transition-all duration-200 border border-gray-200`}>
             <div className={`flex items-center justify-between mb-3`}>
-                <h3 className={`text-lg font-semibold ${isHighlighted ? 'text-blue-700' : 'text-gray-900'}`}>
+                <h3 className={`text-lg font-semibold text-gray-900`}>
                     {`Graph ${timestamp}`}
-                    {isHighlighted && (
-                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {highlightLevel === 'strong' ? 'Selected' : 'In Range'}
-                        </span>
-                    )}
                 </h3>
                 <button
                     onClick={openInNewTab}
@@ -391,7 +323,7 @@ export default function SingleGraphChart({
                     <SquareArrowUpRight className="h-4 w-4" />
                 </button>
             </div>
-            <div ref={containerRef} className="h-[400px] w-[500px] relative bg-gray-50 rounded border">
+            <div ref={containerRef} className="h-[700px] w-[700px] relative bg-gray-50 rounded border">
                 {/* グラフの統計情報 */}
                 <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded px-2 py-1 text-xs text-gray-600">
                     {graphRef.current && (

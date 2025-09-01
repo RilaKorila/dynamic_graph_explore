@@ -6,7 +6,7 @@ import { Sigma } from 'sigma'
 import Graph from 'graphology'
 import { fetchNodes, fetchEdges } from '@/lib/api'
 import { Node, Edge } from '@/types'
-import { getDynamicCommunityColor } from '@/lib/colors'
+import { getCommunityColorWithCustomCondition } from '@/lib/colors'
 
 export default function GraphFullScreenPage() {
     const params = useParams()
@@ -75,7 +75,7 @@ export default function GraphFullScreenPage() {
                 y: y,
                 size: 8,
                 label: node.label,
-                color: getDynamicCommunityColor(node.dynamic_community_id),
+                color: getCommunityColorWithCustomCondition(node.dynamic_community_id),
                 cluster: node.cluster,
                 time: node.time,
                 hidden: false,
@@ -97,6 +97,7 @@ export default function GraphFullScreenPage() {
         // Sigma.jsの設定
         const sigma = new Sigma(graph, containerRef.current, {
             renderEdgeLabels: false,
+            renderLabels: false,
             defaultEdgeColor: '#666',
             defaultNodeColor: '#3B82F6',
             minCameraRatio: 0.1,
