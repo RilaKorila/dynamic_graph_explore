@@ -44,40 +44,49 @@ export const getCommunityColorForBigCommunity = (communitySize: number, communit
  */
 export const getCommunityColorWithCustomCondition = (dynamicCommunityId: string): string => {
     // dynamic_communityIdで対象を絞り込む
-    if (dynamicCommunityId === '26') {
+    if (dynamicCommunityId === '77') {
+        // Cit 1995 node_label_4993 含む
         return '#FB6A4A' // コーラル node_label_657 含む
     }
-    else if (dynamicCommunityId === '23') {
+    else if (dynamicCommunityId === '98') {
+        // Cit 1995 node_label_4993 含む
         return '#31A354'
     }
-    else if (dynamicCommunityId === '27') {
+    else if (dynamicCommunityId === '59') {
+        // Cit 1995 node_label_3382 含む
         return '#4374B3' // 濃い青 2013 node_label_1446 含む
     }
-    else if (dynamicCommunityId === '74') {
+    else if (dynamicCommunityId === '51') {
+        // Cit 1994 node_label_3177 含む
         return '#9E63E2'
     }
-    else if (dynamicCommunityId === '4') {
+    else if (dynamicCommunityId === '3') {
+        // Cit 1995 node_label_8288 含む
         return '#FB6BC5' // ピンク 最大のDynamicCommunity node_label_301含む
     }
-    else if (dynamicCommunityId === '43') {
+    else if (dynamicCommunityId === '45') {
+        // Cit 1994 node_label_100 含む
         return '#A66D46'
     }
-    else if (dynamicCommunityId === '69') {
+    else if (dynamicCommunityId === '99') {
+        // Cit 1995 node_label_7573 含む
         return '#6BAED6'
     }
-    else if (dynamicCommunityId === '36') {
+    else if (dynamicCommunityId === '8') {
+        // Cit 1995 node_label_1134 含む
         return '#E15759' // 明るいコーラル node_label_336
     }
-    else if (dynamicCommunityId === '77') {
+    else if (dynamicCommunityId === '72') {
         return '#B07AA1' // 紫 node_label_908 含む
     }
-    else if (dynamicCommunityId === '18') {
+    else if (dynamicCommunityId === '47') {
+        // Cit 1995 node_label_4993 含む
         return '#76B7B2'
     }
-    else if (dynamicCommunityId === '31') {
+    else if (dynamicCommunityId === '22') {
         return '#B7794F' // 茶色 node_label_292 含む
     }
-    else if (dynamicCommunityId === '75') {
+    else if (dynamicCommunityId === '70') {
         return '#84C2B8' // 水色 node_label_1226 含む
     }
     else {

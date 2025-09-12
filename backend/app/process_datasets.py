@@ -10,7 +10,8 @@ DATASET_NAME = "NBAF_coauthors"
 current_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(current_dir, "..", "data", DATASET_NAME)
 
-timestamps = [str(i) for i in range(1998, 2014)]
+timestamps = [str(i) for i in range(2003, 2013)]  # データ変更: Cit-HepPh
+# timestamps = [str(i) for i in range(1993, 1997)] # データ変更: NBAF_coauthors
 
 # 動的コミュニティ推定のための設定
 SIMILARITY_THRESHOLD = 0.4  # Jaccard類似度の閾値
@@ -90,13 +91,8 @@ def process_datasets():
     graphs_by_timestamp = {}
 
     for i, timestamp in enumerate(timestamps):
-        gen_number = 3
-        layout_number = 3
-
         ## 変換前:
-        csv_file = (
-            f"{data_dir}/{timestamp}/layout{str(gen_number)}-{str(layout_number)}.csv"
-        )
+        csv_file = f"{data_dir}/{timestamp}/layout.csv"
         graph = GraphParser(csv_file, DATASET_NAME)
 
         graphs_by_timestamp[timestamp] = graph
