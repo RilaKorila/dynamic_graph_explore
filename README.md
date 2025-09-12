@@ -1,170 +1,170 @@
 # Dynamic Graph Explorer
 
-動的グラフにおけるコミュニティ進化の可視化プログラム
+A visualization program for community evolution in dynamic graphs
 
-## 概要
+## Overview
 
-このプロジェクトは、時系列で変化するグラフデータにおけるコミュニティの進化パターン（分裂、統合、維持、消滅）を可視化するWebアプリケーションです。Alluvial View（コミュニティ遷移図）とGraph View（ネットワーク図）を連動させて表示し、動的コミュニティの追跡を可能にします。
+This project is a web application that visualizes community evolution patterns (splitting, merging, maintaining, disappearing) in time-series graph data. It synchronizes Alluvial View (community transition diagrams) and Graph View (network diagrams) to enable dynamic community tracking.
 
-## 主な機能
+## Key Features
 
-### 1. 動的コミュニティ可視化
-- **Alluvial View**: 時系列でのコミュニティ遷移を曲線で表現
-- **Graph View**: 各時刻のネットワーク構造を可視化
-- **連動表示**: 時刻スライダーで両ビューを同期
+### 1. Dynamic Community Visualization
+- **Alluvial View**: Represents community transitions over time with curves
+- **Graph View**: Visualizes network structure at each time point
+- **Synchronized Display**: Synchronizes both views with time slider
 
-### 2. コミュニティ追跡アルゴリズム
-- **Jaccard類似度**: コミュニティ間の類似性計算
-- **動的コミュニティID**: 時系列でのコミュニティ系列を自動追跡
-- **遷移パターン検知**: 分裂・統合・維持・消滅の自動識別
+### 2. Community Tracking Algorithm
+- **Jaccard Similarity**: Calculates similarity between communities
+- **Dynamic Community ID**: Automatically tracks community sequences over time
+- **Transition Pattern Detection**: Automatically identifies splitting, merging, maintaining, and disappearing patterns
 
-### 3. インタラクティブ機能
-- **時刻選択**: スライダーで任意の時刻範囲を選択
-- **コミュニティフィルタリング**: 特定のコミュニティのみを表示
-- **フルスクリーン表示**: 個別グラフの詳細表示
-- **色分け表示**: 動的コミュニティIDに基づく一貫した配色
+### 3. Interactive Features
+- **Time Selection**: Select arbitrary time ranges with slider
+- **Community Filtering**: Display only specific communities
+- **Fullscreen Display**: Detailed view of individual graphs
+- **Color-coded Display**: Consistent coloring based on dynamic community ID
 
-## アーキテクチャ
+## Architecture
 
-### バックエンド（FastAPI）
-- **データ配信**: CSV形式でのグラフデータ提供
-- **データ処理**: 動的コミュニティの自動検出とID割り当て
-- **API エンドポイント**:
-  - `GET /data/nodes` - ノードデータ
-  - `GET /data/edges` - エッジデータ
-  - `GET /data/alluvial-nodes` - コミュニティデータ
-  - `GET /data/alluvial-links` - 遷移データ
+### Backend (FastAPI)
+- **Data Distribution**: Provides graph data in CSV format
+- **Data Processing**: Automatic detection and ID assignment of dynamic communities
+- **API Endpoints**:
+  - `GET /data/nodes` - Node data
+  - `GET /data/edges` - Edge data
+  - `GET /data/alluvial-nodes` - Community data
+  - `GET /data/alluvial-links` - Transition data
 
-### フロントエンド（Next.js + TypeScript）
-- **状態管理**: Zustand（設定、データ、UI状態）
-- **可視化**: D3.js + Canvas API（Alluvial View）、Sigma.js（Graph View）
-- **UI**: Tailwind CSS 4.x [[memory:6269471]]
+### Frontend (Next.js + TypeScript)
+- **State Management**: Zustand (settings, data, UI state)
+- **Visualization**: D3.js + Canvas API (Alluvial View), Sigma.js (Graph View)
+- **UI**: Tailwind CSS 4.x
 
-## データ構造
+## Data Structure
 
-### ノードデータ
+### Node Data
 ```csv
 node_id,x,y,time,cluster,label,dynamic_community_id
 1,12.34,-7.89,1993,C3,Alice,D1
 ```
 
-### エッジデータ
+### Edge Data
 ```csv
 src,dst,time
 1,2,1993
 ```
 
-### コミュニティデータ
+### Community Data
 ```csv
 time,community_id,size,label,dynamic_community_id
 1993,C14_1993,27,C14,D1
 ```
 
-## 技術スタック
+## Technology Stack
 
-### バックエンド
+### Backend
 - **Python 3.8+**
-- **FastAPI**: Webフレームワーク
-- **Uvicorn**: ASGIサーバー
+- **FastAPI**: Web framework
+- **Uvicorn**: ASGI server
 
-### フロントエンド
-- **Next.js 14**: Reactフレームワーク
-- **TypeScript**: 型安全性
-- **Zustand**: 状態管理
-- **D3.js**: データ可視化（Alluvial View）
-- **Sigma.js**: グラフ可視化（Graph View）
-- **Canvas API**: 高性能描画
-- **Tailwind CSS 4.x**: スタイリング
+### Frontend
+- **Next.js 14**: React framework
+- **TypeScript**: Type safety
+- **Zustand**: State management
+- **D3.js**: Data visualization (Alluvial View)
+- **Sigma.js**: Graph visualization (Graph View)
+- **Canvas API**: High-performance rendering
+- **Tailwind CSS 4.x**: Styling
 
-### データ処理
-- **Jaccard類似度**: コミュニティ類似性計算
-- **CSV解析**: データ読み込み・変換
+### Data Processing
+- **Jaccard Similarity**: Community similarity calculation
+- **CSV Parsing**: Data loading and conversion
 
-## セットアップ・実行方法
+## Setup & Execution
 
-### 1. バックエンド起動
+### 1. Start Backend
 ```bash
 python backend/run.py
 ```
-バックエンドは `http://localhost:8000` で起動します。
+The backend starts at `http://localhost:8000`.
 
-### 2. フロントエンド起動
+### 2. Start Frontend
 ```bash
 npm install
 npm run dev
 ```
-フロントエンドは `http://localhost:3000` で起動します。
+The frontend starts at `http://localhost:3000`.
 
-### 3. アプリケーション利用
-1. ブラウザで `http://localhost:3000` にアクセス
-2. 時刻スライダーで表示する時刻範囲を選択
-3. Community Dynamics Viewでコミュニティ遷移を確認
-4. Graph Viewでネットワーク構造を確認
-5. 個別グラフをクリックしてフルスクリーン表示
+### 3. Using the Application
+1. Access `http://localhost:3000` in your browser
+2. Select time range to display using the time slider
+3. Check community transitions in Community Dynamics View
+4. Check network structure in Graph View
+5. Click individual graphs for fullscreen display
 
-## 利用可能なデータセット
+## Available Datasets
 
-### Cit-HepPh（高エネルギー物理学論文共著ネットワーク）
-- **期間**: 1993-1996年
-- **データ**: 論文共著関係の時系列ネットワーク
+### Cit-HepPh (High Energy Physics Paper Co-authorship Network)
+- **Period**: 1993-1996
+- **Data**: Time-series network of paper co-authorship relationships
 
-### NBAF_coauthors（共著者ネットワーク）
-- **期間**: 1998-2013年
-- **データ**: 研究者間の共著関係
+### NBAF_coauthors (Co-authorship Network)
+- **Period**: 1998-2013
+- **Data**: Co-authorship relationships between researchers
 
-## ページ構成
+## Page Structure
 
-### メインページ (`/`)
-- **時刻スライダー**: 表示時刻の選択
-- **Community Dynamics View**: Alluvial可視化
-- **Graph View**: 複数時刻のグラフ表示
-- **Community Legend**: コミュニティ凡例
+### Main Page (`/`)
+- **Time Slider**: Time range selection for display
+- **Community Dynamics View**: Alluvial visualization
+- **Graph View**: Multi-time graph display
+- **Community Legend**: Community legend
 
-### フルスクリーングラフ (`/graph/[timestamp]`)
-- **個別グラフ表示**: 指定時刻の詳細ネットワーク
-- **Sigma.js**: インタラクティブなグラフ操作
-- **ラベル非表示**: パフォーマンス最適化
+### Fullscreen Graph (`/graph/[timestamp]`)
+- **Individual Graph Display**: Detailed network for specified time
+- **Sigma.js**: Interactive graph manipulation
+- **Label Hidden**: Performance optimization
 
-## 主要コンポーネント
+## Main Components
 
 ### DynamicCommunityCanvas
-- Alluvial Viewの描画
-- コミュニティブロックと遷移曲線の表示
-- インタラクティブな選択・ハイライト機能
+- Alluvial View rendering
+- Community blocks and transition curves display
+- Interactive selection and highlight features
 
 ### MultiGraphChart
-- 複数時刻のグラフを横スクロール表示
-- 時刻選択に応じた自動スクロール
-- SingleGraphChartの組み合わせ
+- Horizontal scroll display of multi-time graphs
+- Auto-scroll based on time selection
+- Combination of SingleGraphChart components
 
 ### TimeSlider
-- 時刻範囲の選択
-- ブラシ操作による範囲指定
-- 利用可能時刻の自動検出
+- Time range selection
+- Range specification with brush operations
+- Automatic detection of available times
 
 ### Legend
-- コミュニティの色分け表示
-- 時刻別のコミュニティ一覧
-- 動的コミュニティIDに基づく配色
+- Color-coded community display
+- Time-based community list
+- Coloring based on dynamic community ID
 
-## 開発・カスタマイズ
+## Development & Customization
 
-### データ追加
-1. `backend/data/` に新しいデータセットを配置
-2. `backend/app/process_datasets.py` でデータ処理ロジックを調整
-3. フロントエンドで自動的に新しいデータが利用可能
+### Adding Data
+1. Place new datasets in `backend/data/`
+2. Adjust data processing logic in `backend/app/process_datasets.py`
+3. New data automatically becomes available in frontend
 
-### 配色カスタマイズ
-- `src/lib/colors.ts` で動的コミュニティの配色を調整
-- 色の一貫性と区別性を保つ配色アルゴリズム
+### Color Customization
+- Adjust dynamic community coloring in `src/lib/colors.ts`
+- Color consistency and distinction algorithm
 
-### 可視化パラメータ調整
-- Jaccard類似度の閾値設定
-- コミュニティサイズの最小値設定
-- 遷移パターンの検知条件調整
+### Visualization Parameter Adjustment
+- Jaccard similarity threshold settings
+- Minimum community size settings
+- Transition pattern detection condition adjustment
 
-## 引用
+## Citation
 
-Alluvial Viewsの可視化アルゴリズムは以下の論文の内容を参照しています：
+The Alluvial Views visualization algorithm references the following paper:
 
 Vehlow, Corinna, et al. "Visualizing the evolution of communities in dynamic graphs." Computer graphics forum. Vol. 34. No. 1. 2015.
